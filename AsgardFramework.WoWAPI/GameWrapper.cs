@@ -39,6 +39,7 @@ namespace AsgardFramework.WoWAPI
             var observer = new Lazy<DeviceObserver>(() => new DeviceObserver(memory.Value));
             var hook = new Lazy<EndSceneHookExecutor>(() => new EndSceneHookExecutor(injector.Value, memory.Value, observer.Value, compiler.Value));
             m_functions = new Lazy<IFunctions>(() => new FunctionsAccessor(hook.Value, compiler.Value));
+            m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(memory.Value, m_functions.Value));
         }
     }
 }

@@ -10,5 +10,6 @@ namespace AsgardFramework.WoWAPI.Objects
         public readonly float Z;
         private readonly float unknown;
         public readonly float Rotation;
+        internal Position() { }
     }
 }
