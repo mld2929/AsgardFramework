@@ -21,6 +21,8 @@ namespace AsgardFramework.WoWAPI
 
         public ISpellBook SpellBook => m_spellBook.Value;
 
+        public int ID { get; private set; }
+
         public static GameWrapper RunNew(Uri uri)
         {
             var game = Process.Start(uri.AbsoluteUri);
@@ -33,6 +35,7 @@ namespace AsgardFramework.WoWAPI
 
         private GameWrapper(Process game)
         {
+            ID = game.Id;
             var memory = new Lazy<GlobalMemory>(() => new GlobalMemory(game.Id));
             var compiler = new Lazy<FasmCompiler>();
             var injector = new Lazy<CodeInjector>();
@@ -41,5 +44,7 @@ namespace AsgardFramework.WoWAPI
             m_functions = new Lazy<IFunctions>(() => new FunctionsAccessor(hook.Value, compiler.Value));
             m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(memory.Value, m_functions.Value));
         }
+
+        
     }
 }

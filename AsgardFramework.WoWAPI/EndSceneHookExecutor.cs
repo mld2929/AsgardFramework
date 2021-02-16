@@ -3,11 +3,12 @@ using AsgardFramework.DirectXObserver;
 using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Threading.Tasks;
 
 namespace AsgardFramework.WoWAPI
 {
-    internal class EndSceneHookExecutor : ICodeExecutor
+    internal class EndSceneHookExecutor : CriticalFinalizerObject, ICodeExecutor
     {
         private const int c_resultOffset = c_flagOffset - 4;
         private const int c_flagOffset = c_executionOffset - 4;
