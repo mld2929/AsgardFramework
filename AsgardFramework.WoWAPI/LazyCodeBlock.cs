@@ -7,8 +7,7 @@ namespace AsgardFramework.WoWAPI
 {
     internal class LazyCodeBlock : ICodeBlock
     {
-        internal LazyCodeBlock(IFasmCompiler compiler, string[] asm)
-        {
+        internal LazyCodeBlock(IFasmCompiler compiler, string[] asm) {
             m_compiled = new Lazy<byte[]>(() => compiler.Compile(asm).ToArray());
         }
         private readonly Lazy<byte[]> m_compiled;

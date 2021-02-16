@@ -2,6 +2,7 @@
 using AsgardFramework.WoWAPI.Objects;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Object = AsgardFramework.WoWAPI.Objects.Object;
 
@@ -19,54 +20,57 @@ namespace AsgardFramework.WoWAPI
         private readonly int m_pPlayerGuid;
 
         private ulong m_playerGuid => m_memory.Read(m_pPlayerGuid, 8).ToUInt64();
-        public async Task<ObjectData> GetPlayer() => await GetObjectByGuid(m_playerGuid);
+        public async Task<ObjectData> GetPlayer() {
+            return await GetObjectByGuid(m_playerGuid);
+        }
 
-        public async Task<ObjectData> GetObjectByGuid(ulong guid) => (await GetObjects(true)).FirstOrDefault(o => o.Object.Guid == guid);
-        public async Task<IEnumerable<ObjectData>> GetObjects(bool setAllFields)
-        {
+        public async Task<ObjectData> GetObjectByGuid(ulong guid) {
+            return (await GetObjects(true)).FirstOrDefault(o => o.Object.Guid == guid);
+        }
+
+        public async Task<IEnumerable<ObjectData>> GetObjects(bool setAllFields) {
             var objects = new ObjectsEnumerable(m_memory, m_objListStart);
             var result = new List<ObjectData>();
-            foreach (var common in objects)
-            {
+            var playerGuid = m_playerGuid;
+            foreach (var common in objects) {
                 Object obj = null;
-                switch (common.Type)
-                {
+                switch (common.Type) {
                     case ObjectType.Item:
-                        obj = new Item();
+                        obj = m_memory.Read<Item>(common.Fields);
                         break;
                     case ObjectType.Container:
-                        obj = new Container();
+                        obj = m_memory.Read<Container>(common.Fields);
                         break;
                     case ObjectType.Unit:
-                        obj = new Unit();
+                        obj = m_memory.Read<Unit>(common.Fields);
                         break;
                     case ObjectType.Player:
-                        obj = new Player();
+                        obj = m_memory.Read<Unit>(common.Fields);
+                        if (obj.Guid == playerGuid)
+                            obj = m_memory.Read<Player>(common.Fields);
                         break;
                     case ObjectType.GameObject:
-                        obj = new GameObject();
+                        obj = m_memory.Read<GameObject>(common.Fields);
                         break;
                     case ObjectType.DynamicObject:
-                        obj = new DynamicObject();
+                        obj = m_memory.Read<DynamicObject>(common.Fields);
                         break;
                     case ObjectType.Corpse:
-                        obj = new Corpse();
+                        obj = m_memory.Read<Corpse>(common.Fields);
                         break;
                     default:
                         continue;
                 }
                 var data = new ObjectData(common, new Position(), obj);
                 result.Add(data);
-                if (setAllFields)
-                {
+                if (setAllFields) {
                     await m_functions.UpdatePosition(data);
                 }
             }
             return result;
         }
 
-        internal ObjectManager(IGlobalMemory memory, IFunctions functions)
-        {
+        internal ObjectManager(IGlobalMemory memory, IFunctions functions) {
             m_functions = functions;
             m_memory = memory;
 

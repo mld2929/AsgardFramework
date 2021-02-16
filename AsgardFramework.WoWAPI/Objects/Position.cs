@@ -2,7 +2,7 @@
 
 namespace AsgardFramework.WoWAPI.Objects
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Position
     {
         public readonly float X;

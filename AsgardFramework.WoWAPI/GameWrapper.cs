@@ -23,8 +23,7 @@ namespace AsgardFramework.WoWAPI
 
         public int ID { get; private set; }
 
-        public static GameWrapper RunNew(Uri uri)
-        {
+        public static GameWrapper RunNew(Uri uri) {
             var game = Process.Start(uri.AbsoluteUri);
             return new GameWrapper(game);
         }
@@ -33,8 +32,7 @@ namespace AsgardFramework.WoWAPI
 
 
 
-        private GameWrapper(Process game)
-        {
+        private GameWrapper(Process game) {
             ID = game.Id;
             var memory = new Lazy<GlobalMemory>(() => new GlobalMemory(game.Id));
             var compiler = new Lazy<FasmCompiler>();
@@ -45,6 +43,6 @@ namespace AsgardFramework.WoWAPI
             m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(memory.Value, m_functions.Value));
         }
 
-        
+
     }
 }

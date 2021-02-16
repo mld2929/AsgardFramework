@@ -11,13 +11,11 @@ namespace AsgardFramework.WoWAPI
     {
         private readonly ICodeExecutor m_executor;
         private readonly IFasmCompiler m_compiler;
-        internal FunctionsAccessor(ICodeExecutor executor, IFasmCompiler compiler)
-        {
+        internal FunctionsAccessor(ICodeExecutor executor, IFasmCompiler compiler) {
             m_executor = executor;
             m_compiler = compiler;
         }
-        public async Task CastSpell(int spellId, ulong target)
-        {
+        public async Task CastSpell(int spellId, ulong target) {
             const int c_castSpell = 0x0080DA40;
             var asm = new string[]
             {
@@ -35,18 +33,46 @@ namespace AsgardFramework.WoWAPI
             await m_executor.Execute(new LazyCodeBlock(m_compiler, asm));
         }
 
-        public Task<LootSlotInfo> GetLootSlotInfo(int slotNumberFromOne) => throw new NotImplementedException();
-        public Task<string> GetName(int objBase) => throw new NotImplementedException();
-        public Task<int> GetNumLootItems() => throw new NotImplementedException();
-        public Task<SpellInfo> GetSpellInfo(int spellId) => throw new NotImplementedException();
-        public Task<SpellInfo> GetSpellInfo(string spellName) => throw new NotImplementedException();
-        public Task Interact(int objBase) => throw new NotImplementedException();
-        public Task LootSlot(int slotNumberFromOne) => throw new NotImplementedException();
-        public Task SellItem(ulong itemGuid, ulong vendorGuid) => throw new NotImplementedException();
-        public Task UpdatePosition(ObjectData obj) => throw new NotImplementedException();
+        public Task<LootSlotInfo> GetLootSlotInfo(int slotNumberFromOne) {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetName(int objBase) {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> GetNumLootItems() {
+            throw new NotImplementedException();
+        }
+
+        public Task<SpellInfo> GetSpellInfo(int spellId) {
+            throw new NotImplementedException();
+        }
+
+        public Task<SpellInfo> GetSpellInfo(string spellName) {
+            throw new NotImplementedException();
+        }
+
+        public Task Interact(int objBase) {
+            throw new NotImplementedException();
+        }
+
+        public Task LootSlot(int slotNumberFromOne) {
+            throw new NotImplementedException();
+        }
+
+        public Task SellItem(ulong itemGuid, ulong vendorGuid) {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdatePosition(ObjectData obj) {
+            throw new NotImplementedException();
+        }
     }
     internal static class LongHelper
     {
-        internal static string Push(this ulong value) => unchecked($"push 0x{(int)(value >> 32):X}\npush 0x{(int)value:X}");
+        internal static string Push(this ulong value) {
+            return unchecked($"push 0x{(int)(value >> 32):X}\npush 0x{(int)value:X}");
+        }
     }
 }

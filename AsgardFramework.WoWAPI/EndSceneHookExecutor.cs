@@ -24,8 +24,7 @@ namespace AsgardFramework.WoWAPI
         public bool ExecutionFlag { get => m_memory.Read(pFlag, 4).ToInt32() != 0; set => m_memory.Write(pFlag, value.ToBytes()); }
         public int Result => m_memory.Read(pResult, 4).ToInt32();
 
-        internal EndSceneHookExecutor(ICodeInject injector, IGlobalMemory memory, IDirect3DDevice9Observer observer, IFasmCompiler compiler)
-        {
+        internal EndSceneHookExecutor(ICodeInject injector, IGlobalMemory memory, IDirect3DDevice9Observer observer, IFasmCompiler compiler) {
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;
@@ -48,33 +47,31 @@ namespace AsgardFramework.WoWAPI
             m_injector.InjectWithoutRet(m_hookSpace, compiledHook, 0);
             m_memory.Write(m_observer.pEndScene, m_hookSpace.Start.ToBytes());
         }
-        ~EndSceneHookExecutor()
-        {
+        // todo: reset
+        ~EndSceneHookExecutor() {
             m_memory.Write(m_observer.pEndScene, m_observer.EndScene.ToBytes());
         }
 
         // todo: thread-safe
-        public Task<int> Execute(ICodeBlock code)
-        {
+        public Task<int> Execute(ICodeBlock code) {
             var injection = code;
-            if (code.Compiled.Length > m_hookSpace.Size - c_executionOffset)
-            {
+            if (code.Compiled.Length > m_hookSpace.Size - c_executionOffset) {
                 var newSpace = m_memory.Allocate(code.Compiled.Length);
                 m_injector.Inject(newSpace, code, 0);
                 injection = JumpToExtraSpace(newSpace);
             }
             m_injector.Inject(m_hookSpace, injection, c_executionOffset);
             ExecutionFlag = true;
-            return Task.Run(() =>
-            {
-                while (ExecutionFlag) ;
+            return Task.Run(() => {
+                while (ExecutionFlag) {
+                    ;
+                }
 
                 return Result;
             });
         }
 
-        private ICodeBlock JumpToExtraSpace(IAutoManagedMemory space)
-        {
+        private ICodeBlock JumpToExtraSpace(IAutoManagedMemory space) {
             var asm = new string[]
             {
                 $"mov eax, {space.Start}",

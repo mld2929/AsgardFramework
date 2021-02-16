@@ -6,8 +6,7 @@ namespace AsgardFramework.WoWAPI
     {
         public byte[] Compiled { get; private set; }
 
-        internal CompiledCodeBlock(byte[] compiled)
-        {
+        internal CompiledCodeBlock(byte[] compiled) {
             Compiled = compiled;
         }
     }

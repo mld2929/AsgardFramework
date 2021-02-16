@@ -11,10 +11,8 @@ namespace AsgardFramework.FasmManaged
 
     internal static class TargetArchitectureHelper
     {
-        internal static string AsString(this TargetArchitecture architecture)
-        {
-            switch (architecture)
-            {
+        internal static string AsString(this TargetArchitecture architecture) {
+            switch (architecture) {
                 case TargetArchitecture.x86_64:
                     return string.Empty;
                 case TargetArchitecture.x86:

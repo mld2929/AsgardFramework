@@ -2,7 +2,7 @@
 
 namespace AsgardFramework.WoWAPI.Objects
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Object
     {
         public readonly ulong Guid;
@@ -13,7 +13,7 @@ namespace AsgardFramework.WoWAPI.Objects
         private readonly uint padding;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Item : Object
     {
         public readonly ulong Owner;
@@ -35,7 +35,7 @@ namespace AsgardFramework.WoWAPI.Objects
         private readonly uint ItemPadding;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Container : Item
     {
         public readonly uint Slots;
@@ -43,7 +43,7 @@ namespace AsgardFramework.WoWAPI.Objects
         public readonly ulong FirstSlotGuid;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class GameObject : Object
     {
         public readonly ulong CreatedBy;
@@ -57,7 +57,7 @@ namespace AsgardFramework.WoWAPI.Objects
         public readonly uint Bytes_1;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class DynamicObject : Object
     {
         public readonly ulong Caster;
@@ -67,7 +67,7 @@ namespace AsgardFramework.WoWAPI.Objects
         public readonly uint CastTime;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Corpse : Object
     {
         public readonly ulong Owner;
@@ -83,7 +83,7 @@ namespace AsgardFramework.WoWAPI.Objects
         public readonly uint CorpsePadding;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Unit : Object
     {
         public readonly ulong Charm;
@@ -167,7 +167,7 @@ namespace AsgardFramework.WoWAPI.Objects
         private readonly uint UnitPadding;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Player : Unit
     {
         public readonly ulong DuelArbiter;

@@ -9,8 +9,7 @@ namespace AsgardFramework.WoWAPI
         private const int DX_DEVICE_IDX = 0x397C; // **IDirect3DDevice9
         private const int ENDSCENE_IDX = 0xA8;
         private readonly int pIDirect3DDevice9;
-        internal DeviceObserver(IGlobalMemory memory)
-        {
+        internal DeviceObserver(IGlobalMemory memory) {
             var ppDevice = memory.Read(DX_DEVICE, 4).ToInt32() + DX_DEVICE_IDX;
             pIDirect3DDevice9 = memory.Read(ppDevice, 4).ToInt32();
             pEndScene = memory.Read(pIDirect3DDevice9, 4).ToInt32() + ENDSCENE_IDX;

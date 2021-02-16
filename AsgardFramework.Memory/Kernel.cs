@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.Runtime.InteropServices;
 
 namespace AsgardFramework.Memory
@@ -11,7 +12,7 @@ namespace AsgardFramework.Memory
         internal const uint c_memCommitAndReserve = 0x3000;
         internal const uint c_pageReadWriteExecute = 0x40;
         [DllImport("Kernel32.dll")]
-        internal static extern SafeHandle OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+        internal static extern SafeProcessHandle OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
         [DllImport("Kernel32.dll")]
         internal static extern bool VirtualFreeEx(SafeHandle hProcess, IntPtr lpAddress, uint dwSize = 0, uint dwFreeType = c_memRelease);
@@ -34,11 +35,5 @@ namespace AsgardFramework.Memory
 
         [DllImport("Kernel32.dll")]
         internal static extern bool WriteProcessMemory(SafeHandle hProcess, int lpBaseAddress, IntPtr lpBuffer, int nSize, out int lpNumberOfBytesWritten);
-
-        [DllImport("Kernel32.dll")]
-        internal static extern bool ReadProcessMemory(SafeHandle hProcess, int lpBaseAddress, [MarshalAs(UnmanagedType.LPStruct)] object lpBuffer, int nSize, out int lpNumberOfBytesRead);
-
-        [DllImport("Kernel32.dll")]
-        internal static extern bool WriteProcessMemory(SafeHandle hProcess, int lpBaseAddress, [MarshalAs(UnmanagedType.LPStruct)] object lpBuffer, int nSize, out int lpNumberOfBytesWritten);
     }
 }
