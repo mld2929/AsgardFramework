@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AsgardFramework.CodeInject\AsgardFramework.CodeInject.csproj" />
+    <ProjectReference Include="..\AsgardFramework.DirectXObserver\AsgardFramework.DirectXObserver.csproj" />
+    <ProjectReference Include="..\AsgardFramework.FasmManaged\AsgardFramework.FasmManaged.csproj" />
+    <ProjectReference Include="..\AsgardFramework.Memory\AsgardFramework.Memory.csproj" />
+  </ItemGroup>
+
+</Project>
