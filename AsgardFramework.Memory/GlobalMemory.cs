@@ -8,6 +8,9 @@ namespace AsgardFramework.Memory
         private readonly SafeHandle m_handle;
         public GlobalMemory(int processId) {
             m_handle = Kernel.OpenProcess(Kernel.c_allAccess, false, processId);
+            if (m_handle.IsInvalid) {
+                throw new InvalidOperationException();
+            }
         }
 
         public byte[] Read(int address, int count) {
@@ -40,5 +43,16 @@ namespace AsgardFramework.Memory
             Kernel.WriteProcessMemory(m_handle, offset, buffer, size, out var _);
             Marshal.FreeHGlobal(buffer);
         }
+
+        public IAutoManagedSharedBuffer AllocateShared(int size) {
+            size += size % 1024 == 0 ? 0 : 1024 - size % 1024;
+            return new AutoManagedSharedBuffer(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, size), m_handle, size);
+        }
+
+        public IAutoManagedSharedBuffer AllocateAutoScalingShared(int size) {
+            size += size % 1024 == 0 ? 0 : 1024 - size % 1024;
+            return new AutoScalingSharedBuffer(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, size), m_handle, size, AllocateShared);
+        }
+
     }
 }

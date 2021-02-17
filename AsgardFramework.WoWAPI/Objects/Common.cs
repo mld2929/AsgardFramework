@@ -5,7 +5,7 @@ namespace AsgardFramework.WoWAPI.Objects
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class Common
     {
-        internal readonly int Base; // 4
+        internal readonly int VFTable; // 4
         private readonly int unknown_0; // 8
         internal readonly int Fields; // 12
         private readonly int unknown_1; // 16

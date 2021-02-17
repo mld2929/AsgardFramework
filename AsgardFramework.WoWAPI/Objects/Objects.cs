@@ -6,8 +6,7 @@ namespace AsgardFramework.WoWAPI.Objects
     public class Object
     {
         public readonly ulong Guid;
-        [MarshalAs(UnmanagedType.U4)]
-        public readonly ObjectType Type;
+        public readonly int ObjectType;
         public readonly uint EntryID;
         public readonly float Scale;
         private readonly uint padding;

@@ -2,9 +2,7 @@
 using AsgardFramework.WoWAPI.Objects;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Object = AsgardFramework.WoWAPI.Objects.Object;
 
 namespace AsgardFramework.WoWAPI
 {
@@ -29,45 +27,46 @@ namespace AsgardFramework.WoWAPI
         }
 
         public async Task<IEnumerable<ObjectData>> GetObjects(bool setAllFields) {
-            var objects = new ObjectsEnumerable(m_memory, m_objListStart);
-            var result = new List<ObjectData>();
-            var playerGuid = m_playerGuid;
-            foreach (var common in objects) {
-                Object obj = null;
-                switch (common.Type) {
-                    case ObjectType.Item:
-                        obj = m_memory.Read<Item>(common.Fields);
-                        break;
-                    case ObjectType.Container:
-                        obj = m_memory.Read<Container>(common.Fields);
-                        break;
-                    case ObjectType.Unit:
-                        obj = m_memory.Read<Unit>(common.Fields);
-                        break;
-                    case ObjectType.Player:
-                        obj = m_memory.Read<Unit>(common.Fields);
-                        if (obj.Guid == playerGuid)
-                            obj = m_memory.Read<Player>(common.Fields);
-                        break;
-                    case ObjectType.GameObject:
-                        obj = m_memory.Read<GameObject>(common.Fields);
-                        break;
-                    case ObjectType.DynamicObject:
-                        obj = m_memory.Read<DynamicObject>(common.Fields);
-                        break;
-                    case ObjectType.Corpse:
-                        obj = m_memory.Read<Corpse>(common.Fields);
-                        break;
-                    default:
-                        continue;
-                }
-                var data = new ObjectData(common, new Position(), obj);
-                result.Add(data);
-                if (setAllFields) {
-                    await m_functions.UpdatePosition(data);
+            var objects = new ObjectsEnumerable(m_memory, m_objListStart).ToList();
+            if (setAllFields) {
+                var playerGuid = m_playerGuid;
+                foreach (var obj in objects) {
+                    switch (obj.Common.Type) {
+                        case ObjectType.Item:
+                            obj.Object = m_memory.Read<Item>(obj.Common.Fields);
+                            break;
+                        case ObjectType.Container:
+                            obj.Object = m_memory.Read<Container>(obj.Common.Fields);
+                            break;
+                        case ObjectType.Unit:
+                            obj.Object = m_memory.Read<Unit>(obj.Common.Fields);
+                            break;
+                        case ObjectType.Player:
+                            obj.Object = m_memory.Read<Unit>(obj.Common.Fields);
+
+                            if (obj.Object.Guid == playerGuid) {
+                                obj.Object = m_memory.Read<Player>(obj.Common.Fields);
+                            }
+
+                            break;
+                        case ObjectType.GameObject:
+                            obj.Object = m_memory.Read<GameObject>(obj.Common.Fields);
+                            break;
+                        case ObjectType.DynamicObject:
+                            obj.Object = m_memory.Read<DynamicObject>(obj.Common.Fields);
+                            break;
+                        case ObjectType.Corpse:
+                            obj.Object = m_memory.Read<Corpse>(obj.Common.Fields);
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    await m_functions.UpdatePosition(obj);
                 }
             }
-            return result;
+
+            return objects;
         }
 
         internal ObjectManager(IGlobalMemory memory, IFunctions functions) {

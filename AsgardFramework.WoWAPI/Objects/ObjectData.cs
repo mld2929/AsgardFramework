@@ -2,10 +2,12 @@
 {
     public class ObjectData
     {
-        public readonly Common Common;
-        public readonly Position Position;
-        public readonly Object Object;
-        internal ObjectData(Common common, Position position, Object obj) {
+        internal readonly int Base;
+        public Common Common { get; internal set; }
+        public Position Position { get; internal set; }
+        public Object Object { get; internal set; }
+        internal ObjectData(int baseAddress, Common common, Position position, Object obj) {
+            Base = baseAddress;
             Common = common;
             Position = position;
             Object = obj;

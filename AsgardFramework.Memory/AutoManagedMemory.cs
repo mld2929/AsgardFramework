@@ -6,14 +6,18 @@ namespace AsgardFramework.Memory
 {
     internal class AutoManagedMemory : SafeHandleZeroOrMinusOneIsInvalid, IAutoManagedMemory
     {
-        private readonly SafeHandle m_processHandle;
+        protected readonly SafeHandle m_processHandle;
         internal AutoManagedMemory(IntPtr address, SafeHandle processHandle, int size) : base(true) {
             handle = address;
+            if (IsInvalid) {
+                throw new InvalidOperationException();
+            }
+
             m_processHandle = processHandle;
             Size = size;
         }
 
-        public int Size { get; private set; }
+        public virtual int Size { get; private set; }
 
         public int Start => handle.ToInt32();
 

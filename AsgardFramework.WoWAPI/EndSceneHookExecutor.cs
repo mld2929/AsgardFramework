@@ -4,6 +4,7 @@ using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AsgardFramework.WoWAPI
@@ -19,6 +20,7 @@ namespace AsgardFramework.WoWAPI
         private readonly ICodeInject m_injector;
         private readonly IFasmCompiler m_compiler;
         private readonly IDirect3DDevice9Observer m_observer;
+        private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
         private int pResult => m_hookSpace.Start + c_resultOffset;
         private int pFlag => m_hookSpace.Start + c_flagOffset;
         public bool ExecutionFlag { get => m_memory.Read(pFlag, 4).ToInt32() != 0; set => m_memory.Write(pFlag, value.ToBytes()); }
@@ -30,7 +32,7 @@ namespace AsgardFramework.WoWAPI
             m_observer = observer;
             m_compiler = compiler;
 
-            // todo: write hook
+            // todo: write detour
             var hook = new string[]
             {
                 "pushad",
@@ -52,23 +54,22 @@ namespace AsgardFramework.WoWAPI
             m_memory.Write(m_observer.pEndScene, m_observer.EndScene.ToBytes());
         }
 
-        // todo: thread-safe
-        public Task<int> Execute(ICodeBlock code) {
+        public async Task<int> Execute(ICodeBlock code) {
             var injection = code;
             if (code.Compiled.Length > m_hookSpace.Size - c_executionOffset) {
                 var newSpace = m_memory.Allocate(code.Compiled.Length);
                 m_injector.Inject(newSpace, code, 0);
                 injection = JumpToExtraSpace(newSpace);
             }
+            await m_semaphore.WaitAsync();
             m_injector.Inject(m_hookSpace, injection, c_executionOffset);
             ExecutionFlag = true;
-            return Task.Run(() => {
-                while (ExecutionFlag) {
-                    ;
-                }
+            while (ExecutionFlag) {
 
-                return Result;
-            });
+            }
+            var result = Result;
+            m_semaphore.Release();
+            return result;
         }
 
         private ICodeBlock JumpToExtraSpace(IAutoManagedMemory space) {
