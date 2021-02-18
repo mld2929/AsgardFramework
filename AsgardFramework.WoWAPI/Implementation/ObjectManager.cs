@@ -19,7 +19,7 @@ namespace AsgardFramework.WoWAPI.Implementation
         private readonly int m_objListStart;
         private readonly int m_pPlayerGuid;
 
-        private ulong m_playerGuid => m_memory.Read(m_pPlayerGuid, 8).ToUInt64();
+        private ulong m_playerGuid => m_memory.Read<ulong>(m_pPlayerGuid);
         public async Task<ObjectData> GetPlayer() {
             return await GetObjectByGuid(m_playerGuid);
         }
@@ -74,9 +74,9 @@ namespace AsgardFramework.WoWAPI.Implementation
             m_functions = functions;
             m_memory = memory;
 
-            var pObjManager = m_memory.Read(c_staticClientConnection, 4).ToInt32() + c_objManagerOffset;
-            var objManager = m_memory.Read(pObjManager, 4).ToInt32();
-            m_objListStart = m_memory.Read(objManager + c_firstObjOffset, 4).ToInt32();
+            var pObjManager = m_memory.Read<int>(c_staticClientConnection) + c_objManagerOffset;
+            var objManager = m_memory.Read<int>(pObjManager);
+            m_objListStart = m_memory.Read<int>(objManager + c_firstObjOffset);
             m_pPlayerGuid = objManager + c_playerGuidOffset;
         }
     }

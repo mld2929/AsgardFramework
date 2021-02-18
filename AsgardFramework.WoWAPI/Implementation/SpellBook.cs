@@ -14,7 +14,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             m_memory = memory;
         }
         public IEnumerable<int> GetSpells() {
-            var count = m_memory.Read(c_spellCount, 4).ToInt32();
+            var count = m_memory.Read<int>(c_spellCount);
             return m_memory.Read(c_spellBook, count * 4).ToArrayOfInt32();
         }
     }

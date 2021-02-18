@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 using AsgardFramework.CodeInject;
 using AsgardFramework.WoWAPI.Objects;
-using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -45,8 +44,8 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public async Task<Position> GetPosition(int objBase) {
-            const int c_getPositionOffset = 0x12;
-            var getPosition = m_memory.Read(m_memory.Read(objBase, 4).ToInt32() + c_getPositionOffset, 4).ToInt32();
+            const int c_getPositionOffset = 12 * 4;
+            var getPosition = m_memory.Read<int>(m_memory.Read<int>(objBase) + c_getPositionOffset);
             var size = sizeof(float) * 4;
             if (!m_buffer.TryReserve(size, out var buffer)) {
                 throw new OutOfMemoryException();
@@ -59,9 +58,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "call eax"
             };
             await m_executor.Execute(new CompiledCodeBlock(m_compiler.Assemble(asm).ToArray()));
-            var result = m_memory.Read(buffer.Start, size).ToArrayOfFloat();
+            var result = m_memory.Read<Position>(buffer.Start);
             buffer.Dispose();
-            return new Position(result[0], result[1], result[2], result[3]);
+            return result;
         }
 
         public Task<bool> HasAuraBySpellId(int objBase, int spellId) {

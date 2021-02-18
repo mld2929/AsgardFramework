@@ -1,5 +1,6 @@
-﻿using System.Linq;
-using System.Runtime.ConstrainedExecution;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,11 +8,10 @@ using AsgardFramework.CodeInject;
 using AsgardFramework.DirectXObserver;
 using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
-    internal class EndSceneHookExecutor : CriticalFinalizerObject, ICodeExecutor
+    internal class EndSceneHookExecutor : CriticalHandle, ICodeExecutor
     {
         private const int c_resultOffset = c_flagOffset - 4;
         private const int c_flagOffset = c_executionOffset - 4;
@@ -25,35 +25,37 @@ namespace AsgardFramework.WoWAPI.Implementation
         private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
         private int pResult => m_hookSpace.Start + c_resultOffset;
         private int pFlag => m_hookSpace.Start + c_flagOffset;
-        public bool ExecutionFlag { get => m_memory.Read(pFlag, 4).ToInt32() != 0; set => m_memory.Write(pFlag, value.ToBytes()); }
-        public int Result => m_memory.Read(pResult, 4).ToInt32();
+        public bool ExecutionFlag { get => m_memory.Read<int>(pFlag) != 0; set => m_memory.Write(pFlag, value ? 1 : 0); }
+        public int Result => m_memory.Read<int>(pResult);
 
-        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) {
+        public override bool IsInvalid => m_memory.Read<int>(m_observer.pEndScene) == m_observer.EndScene;
+
+        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) : base((IntPtr)observer.EndScene) {
+            AppDomain.CurrentDomain.ProcessExit += (_, __) => Dispose();
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;
             m_compiler = compiler;
-
-            // todo: write detour
+            m_hookSpace = memory.Allocate(c_hookSpaceSize);
             var hook = new string[]
             {
                 "pushad",
                 "pushfd",
+                $"cmp dword [{m_hookSpace.Start + c_flagOffset}], 0",
+                "je @out",
+                $"mov eax, {m_hookSpace.Start + c_executionOffset}",
+                $"call eax",
+                $"mov dword [{m_hookSpace.Start + c_resultOffset}], eax",
+                $"mov dword [{m_hookSpace.Start + c_flagOffset}], 0",
+                "@out:",
                 "popfd",
                 "popad",
                 $"mov eax, {m_observer.EndScene}",
-                "jmp eax"
+                $"jmp eax"
             };
-
             var compiledHook = new CompiledCodeBlock(compiler.Assemble(hook).ToArray());
-
-            m_hookSpace = memory.Allocate(c_hookSpaceSize);
             m_injector.InjectWithoutRet(m_hookSpace, compiledHook, 0);
-            m_memory.Write(m_observer.pEndScene, m_hookSpace.Start.ToBytes());
-        }
-        // todo: reset
-        ~EndSceneHookExecutor() {
-            m_memory.Write(m_observer.pEndScene, m_observer.EndScene.ToBytes());
+            m_memory.Write(m_observer.pEndScene, m_hookSpace.Start);
         }
 
         public async Task<int> Execute(ICodeBlock code) {
@@ -67,7 +69,6 @@ namespace AsgardFramework.WoWAPI.Implementation
             m_injector.Inject(m_hookSpace, injection, c_executionOffset);
             ExecutionFlag = true;
             while (ExecutionFlag) {
-
             }
             var result = Result;
             m_semaphore.Release();
@@ -78,9 +79,14 @@ namespace AsgardFramework.WoWAPI.Implementation
             var asm = new string[]
             {
                 $"mov eax, {space.Start}",
-                "call eax"
+                "call eax",
+                "ret"
             };
             return new CompiledCodeBlock(m_compiler.Assemble(asm).ToArray());
+        }
+        protected override bool ReleaseHandle() {
+            m_memory.Write(m_observer.pEndScene, m_observer.EndScene);
+            return IsInvalid;
         }
     }
 }

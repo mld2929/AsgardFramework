@@ -6,7 +6,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal partial class FunctionsAccessor
     {
-        private const int c_dataBufferSize = 8096;
+        private const int c_dataBufferSize = 0x800000; // 800 KB
         private readonly ICodeExecutor m_executor;
         private readonly IFasmAssembler m_compiler;
         private readonly IGlobalMemory m_memory;

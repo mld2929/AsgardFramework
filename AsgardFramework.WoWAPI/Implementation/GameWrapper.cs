@@ -30,7 +30,7 @@ namespace AsgardFramework.WoWAPI.Implementation
         public IGameFunctions GameFunctions => m_functions.Value;
 
         public static GameWrapper RunNew(Uri uri) {
-            var game = Process.Start(uri.AbsoluteUri);
+            var game = Process.Start(uri.AbsolutePath);
             return new GameWrapper(game);
         }
 

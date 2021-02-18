@@ -12,11 +12,11 @@ namespace AsgardFramework.FasmManaged
         private const string c_dllName = "FASM.DLL";
         private const int c_defaultBufferSize = 8 * 1024 * 1024; // 8 MB
         private readonly byte[] m_buffer = new byte[c_defaultBufferSize];
-        private readonly object locker = new object();
+        private readonly object m_locker = new object();
 
         public string FasmDLLVersion {
             get {
-                uint version = fasm_GetVersion();
+                var version = fasm_GetVersion();
                 return unchecked($"{((ushort)(version)).ToString(CultureInfo.InvariantCulture)}.{((ushort)(version >> 16)).ToString(CultureInfo.InvariantCulture)}");
             }
         }
@@ -138,14 +138,14 @@ namespace AsgardFramework.FasmManaged
         }
         private unsafe byte[] assemble(string data, TargetArchitecture architecture, bool fromFile, TextWriter output) {
             data = fromFile ? data : architecture.AsString() + data;
-            GCHandle? gchandle = output == null ? (GCHandle?)null : GCHandle.Alloc(output);
-            IntPtr handle = gchandle.HasValue ? GCHandle.ToIntPtr(gchandle.Value) : IntPtr.Zero;
-            lock (locker) {
+            var gchandle = output == null ? (GCHandle?)null : GCHandle.Alloc(output);
+            var handle = gchandle.HasValue ? GCHandle.ToIntPtr(gchandle.Value) : IntPtr.Zero;
+            lock (m_locker) {
                 Array.Fill<byte>(m_buffer, 0);
-                byte[] buffer = m_buffer;
-                FASM_CONDITION condition = fromFile ? fasm_AssembleFile(data, buffer, c_defaultBufferSize, hDisplayPipe: handle) : fasm_Assemble(data, buffer, c_defaultBufferSize, hDisplayPipe: handle);
+                var buffer = m_buffer;
+                var condition = fromFile ? fasm_AssembleFile(data, buffer, c_defaultBufferSize, hDisplayPipe: handle) : fasm_Assemble(data, buffer, c_defaultBufferSize, hDisplayPipe: handle);
                 if (condition == FASM_CONDITION.FASM_OUT_OF_MEMORY) {
-                    int extraMemorySize = c_defaultBufferSize;
+                    var extraMemorySize = c_defaultBufferSize;
                     do {
                         extraMemorySize += c_defaultBufferSize;
                         buffer = new byte[extraMemorySize];
@@ -154,10 +154,10 @@ namespace AsgardFramework.FasmManaged
                 }
                 gchandle?.Free();
                 fixed (byte* bytes = buffer) {
-                    FASM_STATE state = Marshal.PtrToStructure<FASM_STATE>((IntPtr)bytes);
+                    var state = Marshal.PtrToStructure<FASM_STATE>((IntPtr)bytes);
                     switch (condition) {
                         case FASM_CONDITION.FASM_OK:
-                            byte[] result = new byte[state.OutputLength];
+                            var result = new byte[state.OutputLength];
                             Marshal.Copy((IntPtr)state.OutputData, result, 0, state.OutputLength);
                             return result;
                         case FASM_CONDITION.FASM_ERROR:

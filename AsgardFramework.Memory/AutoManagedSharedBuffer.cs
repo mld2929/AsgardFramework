@@ -17,15 +17,15 @@ namespace AsgardFramework.Memory
         public virtual bool TryReserve(int size, out IAutoManagedMemory reserved) {
             reserved = null;
             lock (m_lock) {
-                SharedBlockData min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
+                var min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
                 if (min == null) {
                     MergeBlocks();
                     min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
                 }
                 if (min != null) {
                     if (min.Size - size != 0) {
-                        (SharedBlockData left, SharedBlockData right) = min.Split(size);
-                        int index = m_blocks.IndexOf(min);
+                        (var left, var right) = min.Split(size);
+                        var index = m_blocks.IndexOf(min);
                         m_blocks.RemoveAt(index);
                         m_blocks.Insert(index, right);
                         m_blocks.Insert(index, left);
@@ -38,7 +38,7 @@ namespace AsgardFramework.Memory
         }
 
         private void MergeBlocks() {
-            for (int i = 0; i < m_blocks.Count() - 1; i++) {
+            for (var i = 0; i < m_blocks.Count() - 1; i++) {
                 if (m_blocks[i].Concat(m_blocks[i + 1]) is SharedBlockData merged) {
                     m_blocks.Insert(i, merged);
                     m_blocks.RemoveRange(i + 1, 2);

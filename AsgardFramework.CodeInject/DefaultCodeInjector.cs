@@ -7,7 +7,7 @@ namespace AsgardFramework.CodeInject
 {
     public class DefaultCodeInjector : ICodeInjector
     {
-        private static readonly byte[] c_ret = new byte[] { 0xC5 };
+        private static readonly byte[] c_ret = new byte[] { 0xC3 };
         public void Inject(IMemory memory, ICodeBlock code, int offset) {
             InjectWithoutRet(memory, code, offset);
             memory.Write(offset + code.Compiled.Length, c_ret);

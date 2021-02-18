@@ -24,6 +24,7 @@ namespace AsgardFramework.WoWAPI.Utils
             return BitConverter.GetBytes(value);
         }
 
+        // todo: test
         internal static int[] ToArrayOfInt32(this byte[] bytes) {
             var size = bytes.Length / 4;
             var result = new int[size];
