@@ -1,9 +1,10 @@
-﻿using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Objects;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace AsgardFramework.WoWAPI
+using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Objects;
+
+namespace AsgardFramework.WoWAPI.Utils
 {
     internal class ObjectsEnumerator : IEnumerator<ObjectData>
     {

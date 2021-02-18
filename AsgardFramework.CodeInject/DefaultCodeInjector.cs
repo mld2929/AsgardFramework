@@ -1,11 +1,11 @@
-﻿using AsgardFramework.CodeInject;
-using AsgardFramework.Memory;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace AsgardFramework.WoWAPI
+using AsgardFramework.Memory;
+
+namespace AsgardFramework.CodeInject
 {
-    internal class CodeInjector : ICodeInject
+    public class DefaultCodeInjector : ICodeInjector
     {
         private static readonly byte[] c_ret = new byte[] { 0xC5 };
         public void Inject(IMemory memory, ICodeBlock code, int offset) {

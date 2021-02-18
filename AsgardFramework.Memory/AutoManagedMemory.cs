@@ -1,6 +1,7 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace AsgardFramework.Memory
 {
@@ -38,27 +39,31 @@ namespace AsgardFramework.Memory
             Kernel.WriteProcessMemory(m_processHandle, handle + offset, data, data.Length, out var _);
         }
 
-        public T Read<T>(int offset) where T : class, new() {
+        public T Read<T>(int offset) where T : new() {
             var size = Marshal.SizeOf<T>();
             if (size + offset > Size) {
                 throw new ArgumentOutOfRangeException();
             }
-            var buffer = Marshal.AllocHGlobal(size);
-            Kernel.ReadProcessMemory(m_processHandle, offset, buffer, size, out var _);
-            var obj = Marshal.PtrToStructure<T>(buffer);
-            Marshal.FreeHGlobal(buffer);
-            return obj;
+            var bytes = new byte[size];
+            Kernel.ReadProcessMemory(m_processHandle, offset, bytes, bytes.Length, out var _);
+            unsafe {
+                fixed (byte* buffer = bytes) {
+                    return Marshal.PtrToStructure<T>((IntPtr)buffer);
+                }
+            }
         }
-        public void Write<T>(int offset, T data) where T : class, new() {
+        public void Write<T>(int offset, T data) where T : new() {
             var size = Marshal.SizeOf<T>();
             if (size + offset > Size) {
                 throw new ArgumentOutOfRangeException();
             }
-
-            var buffer = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(data, buffer, true);
-            Kernel.WriteProcessMemory(m_processHandle, offset, buffer, size, out var _);
-            Marshal.FreeHGlobal(buffer);
+            var bytes = new byte[size];
+            unsafe {
+                fixed (byte* buffer = bytes) {
+                    Marshal.StructureToPtr(data, (IntPtr)buffer, true);
+                }
+            }
+            Kernel.WriteProcessMemory(m_processHandle, offset, bytes, bytes.Length, out var _);
         }
 
         protected override bool ReleaseHandle() {

@@ -3,7 +3,9 @@
     public interface IGameWrapper
     {
         int ID { get; }
-        IFunctions Functions { get; }
+        IInjectedFunctions InjectedFunctions { get; }
+        IGameAPIFunctions GameAPIFunctions { get; }
+        IGameFunctions GameFunctions { get; }
         IObjectManager ObjectManager { get; }
         ISpellBook SpellBook { get; }
     }

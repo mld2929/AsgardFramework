@@ -28,20 +28,23 @@ namespace AsgardFramework.Memory
             return new AutoManagedMemory(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, size), m_handle, size);
         }
 
-        public T Read<T>(int offset) where T : class, new() {
-            var size = Marshal.SizeOf<T>();
-            var buffer = Marshal.AllocHGlobal(size);
-            Kernel.ReadProcessMemory(m_handle, offset, buffer, size, out var _);
-            var obj = Marshal.PtrToStructure<T>(buffer);
-            Marshal.FreeHGlobal(buffer);
-            return obj;
+        public T Read<T>(int offset) where T : new() {
+            var bytes = new byte[Marshal.SizeOf<T>()];
+            Kernel.ReadProcessMemory(m_handle, offset, bytes, bytes.Length, out var _);
+            unsafe {
+                fixed (byte* buffer = bytes) {
+                    return Marshal.PtrToStructure<T>((IntPtr)buffer);
+                }
+            }
         }
-        public void Write<T>(int offset, T data) where T : class, new() {
-            var size = Marshal.SizeOf<T>();
-            var buffer = Marshal.AllocHGlobal(size);
-            Marshal.StructureToPtr(data, buffer, true);
-            Kernel.WriteProcessMemory(m_handle, offset, buffer, size, out var _);
-            Marshal.FreeHGlobal(buffer);
+        public void Write<T>(int offset, T data) where T : new() {
+            var bytes = new byte[Marshal.SizeOf<T>()];
+            unsafe {
+                fixed (byte* buffer = bytes) {
+                    Marshal.StructureToPtr(data, (IntPtr)buffer, true);
+                }
+            }
+            Kernel.WriteProcessMemory(m_handle, offset, bytes, bytes.Length, out var _);
         }
 
         public IAutoManagedSharedBuffer AllocateShared(int size) {

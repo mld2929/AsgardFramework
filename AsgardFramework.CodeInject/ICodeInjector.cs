@@ -1,9 +1,10 @@
-﻿using AsgardFramework.Memory;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+
+using AsgardFramework.Memory;
 
 namespace AsgardFramework.CodeInject
 {
-    public interface ICodeInject
+    public interface ICodeInjector
     {
         void Inject(IMemory memory, ICodeBlock code, int offset);
         void InjectWithoutRet(IMemory memory, ICodeBlock code, int offset);

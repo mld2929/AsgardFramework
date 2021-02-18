@@ -1,9 +1,10 @@
 ﻿using AsgardFramework.DirectXObserver;
 using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Utils;
 
-namespace AsgardFramework.WoWAPI
+namespace AsgardFramework.WoWAPI.Implementation
 {
-    internal class DeviceObserver : IDirect3DDevice9Observer
+    internal class DeviceObserver : IIDirect3DDevice9Observer
     {
         private const int DX_DEVICE = 0xC5DF88; // ?
         private const int DX_DEVICE_IDX = 0x397C; // **IDirect3DDevice9

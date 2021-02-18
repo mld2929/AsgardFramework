@@ -1,7 +1,9 @@
-﻿using AsgardFramework.Memory;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace AsgardFramework.WoWAPI
+using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Utils;
+
+namespace AsgardFramework.WoWAPI.Implementation
 {
     internal class SpellBook : ISpellBook
     {

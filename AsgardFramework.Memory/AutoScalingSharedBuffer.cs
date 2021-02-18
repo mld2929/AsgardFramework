@@ -18,35 +18,26 @@ namespace AsgardFramework.Memory
         }
 
         public override bool TryReserve(int size, out IAutoManagedMemory reserved) {
-            Exception exception = null;
             reserved = null;
             lock (m_lock) {
-                try {
-                    if (size > base.Size || !base.TryReserve(size, out reserved)) {
-                        foreach (var buffer in m_additional) {
-                            if (size > buffer.Size) {
-                                continue;
-                            }
-
-                            if (buffer.TryReserve(size, out reserved)) {
-                                break;
-                            }
+                if (size > base.Size || !base.TryReserve(size, out reserved)) {
+                    foreach (var buffer in m_additional) {
+                        if (size > buffer.Size) {
+                            continue;
                         }
-                        if (reserved == null) {
-                            var newBuffer = m_fabric(size);
-                            m_additional.Insert(0, newBuffer);
-                            m_additionalSize += newBuffer.Size;
-                            newBuffer.TryReserve(size, out reserved);
+
+                        if (buffer.TryReserve(size, out reserved)) {
+                            break;
                         }
                     }
-                } catch (Exception ex) {
-                    exception = ex;
+                    if (reserved == null) {
+                        var newBuffer = m_fabric(size);
+                        m_additional.Insert(0, newBuffer);
+                        m_additionalSize += newBuffer.Size;
+                        newBuffer.TryReserve(size, out reserved);
+                    }
                 }
             }
-            if (exception != null) {
-                throw exception;
-            }
-
             return reserved != null;
         }
     }

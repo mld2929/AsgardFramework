@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AsgardFramework.WoWAPI
+namespace AsgardFramework.WoWAPI.Utils
 {
     internal static class BytesHelper
     {

@@ -1,13 +1,15 @@
-﻿using AsgardFramework.CodeInject;
-using AsgardFramework.DirectXObserver;
-using AsgardFramework.FasmManaged;
-using AsgardFramework.Memory;
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsgardFramework.WoWAPI
+using AsgardFramework.CodeInject;
+using AsgardFramework.DirectXObserver;
+using AsgardFramework.FasmManaged;
+using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Utils;
+
+namespace AsgardFramework.WoWAPI.Implementation
 {
     internal class EndSceneHookExecutor : CriticalFinalizerObject, ICodeExecutor
     {
@@ -17,16 +19,16 @@ namespace AsgardFramework.WoWAPI
         private const int c_hookSpaceSize = 8096;
         private readonly IAutoManagedMemory m_hookSpace;
         private readonly IGlobalMemory m_memory;
-        private readonly ICodeInject m_injector;
-        private readonly IFasmCompiler m_compiler;
-        private readonly IDirect3DDevice9Observer m_observer;
+        private readonly ICodeInjector m_injector;
+        private readonly IFasmAssembler m_compiler;
+        private readonly IIDirect3DDevice9Observer m_observer;
         private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
         private int pResult => m_hookSpace.Start + c_resultOffset;
         private int pFlag => m_hookSpace.Start + c_flagOffset;
         public bool ExecutionFlag { get => m_memory.Read(pFlag, 4).ToInt32() != 0; set => m_memory.Write(pFlag, value.ToBytes()); }
         public int Result => m_memory.Read(pResult, 4).ToInt32();
 
-        internal EndSceneHookExecutor(ICodeInject injector, IGlobalMemory memory, IDirect3DDevice9Observer observer, IFasmCompiler compiler) {
+        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) {
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;
@@ -43,7 +45,7 @@ namespace AsgardFramework.WoWAPI
                 "jmp eax"
             };
 
-            var compiledHook = new CompiledCodeBlock(compiler.Compile(hook).ToArray());
+            var compiledHook = new CompiledCodeBlock(compiler.Assemble(hook).ToArray());
 
             m_hookSpace = memory.Allocate(c_hookSpaceSize);
             m_injector.InjectWithoutRet(m_hookSpace, compiledHook, 0);
@@ -78,7 +80,7 @@ namespace AsgardFramework.WoWAPI
                 $"mov eax, {space.Start}",
                 "call eax"
             };
-            return new CompiledCodeBlock(m_compiler.Compile(asm).ToArray());
+            return new CompiledCodeBlock(m_compiler.Assemble(asm).ToArray());
         }
     }
 }

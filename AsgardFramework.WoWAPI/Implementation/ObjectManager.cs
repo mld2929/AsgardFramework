@@ -1,10 +1,12 @@
-﻿using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Objects;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AsgardFramework.WoWAPI
+using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Objects;
+using AsgardFramework.WoWAPI.Utils;
+
+namespace AsgardFramework.WoWAPI.Implementation
 {
     internal class ObjectManager : IObjectManager
     {
@@ -12,7 +14,7 @@ namespace AsgardFramework.WoWAPI
         private const int c_objManagerOffset = 0x2ED0;
         private const int c_firstObjOffset = 0xAC;
         private const int c_playerGuidOffset = 0xC0;
-        private readonly IFunctions m_functions;
+        private readonly IGameFunctions m_functions;
         private readonly IGlobalMemory m_memory;
         private readonly int m_objListStart;
         private readonly int m_pPlayerGuid;
@@ -61,15 +63,14 @@ namespace AsgardFramework.WoWAPI
                         default:
                             continue;
                     }
-
-                    await m_functions.UpdatePosition(obj);
+                    obj.Position = await m_functions.GetPosition(obj.Base);
                 }
             }
 
             return objects;
         }
 
-        internal ObjectManager(IGlobalMemory memory, IFunctions functions) {
+        internal ObjectManager(IGlobalMemory memory, IGameFunctions functions) {
             m_functions = functions;
             m_memory = memory;
 

@@ -15,39 +15,30 @@ namespace AsgardFramework.Memory
         }
 
         public virtual bool TryReserve(int size, out IAutoManagedMemory reserved) {
-            Exception exception = null;
             reserved = null;
             lock (m_lock) {
-                try {
-                    var min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
-                    if (min == null) {
-                        MergeBlocks();
-                        min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
+                SharedBlockData min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
+                if (min == null) {
+                    MergeBlocks();
+                    min = m_blocks.Where(b => !b.Reserved && b.Size >= size).Min();
+                }
+                if (min != null) {
+                    if (min.Size - size != 0) {
+                        (SharedBlockData left, SharedBlockData right) = min.Split(size);
+                        int index = m_blocks.IndexOf(min);
+                        m_blocks.RemoveAt(index);
+                        m_blocks.Insert(index, right);
+                        m_blocks.Insert(index, left);
+                        min = left;
                     }
-                    if (min != null) {
-                        if (min.Size - size != 0) {
-                            var (left, right) = min.Split(size);
-                            var index = m_blocks.IndexOf(min);
-                            m_blocks.RemoveAt(index);
-                            m_blocks.Insert(index, right);
-                            m_blocks.Insert(index, left);
-                            min = left;
-                        }
-                        reserved = new SharedBlock(min, m_processHandle);
-                    }
-                } catch (Exception ex) {
-                    exception = ex;
+                    reserved = new SharedBlock(min, m_processHandle);
                 }
             }
-            if (exception != null) {
-                throw exception;
-            }
-
             return reserved != null;
         }
 
         private void MergeBlocks() {
-            for (var i = 0; i < m_blocks.Count() - 1; i++) {
+            for (int i = 0; i < m_blocks.Count() - 1; i++) {
                 if (m_blocks[i].Concat(m_blocks[i + 1]) is SharedBlockData merged) {
                     m_blocks.Insert(i, merged);
                     m_blocks.RemoveRange(i + 1, 2);
