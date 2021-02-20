@@ -5,18 +5,31 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal class DeviceObserver : IIDirect3DDevice9Observer
     {
-        private const int DX_DEVICE = 0xC5DF88; // ?
-        private const int DX_DEVICE_IDX = 0x397C; // **IDirect3DDevice9
-        private const int ENDSCENE_IDX = 0xA8;
-        private readonly int pIDirect3DDevice9;
+        #region Constructors
+
         internal DeviceObserver(IGlobalMemory memory) {
-            var ppDevice = memory.Read<int>(DX_DEVICE) + DX_DEVICE_IDX;
-            pIDirect3DDevice9 = memory.Read<int>(ppDevice);
-            pEndScene = memory.Read<int>(pIDirect3DDevice9) + ENDSCENE_IDX;
+            var ppDevice = memory.Read<int>(c_dxDevice) + c_dxDeviceIdx;
+            var pIDirect3DDevice9 = memory.Read<int>(ppDevice);
+            pEndScene = memory.Read<int>(pIDirect3DDevice9) + c_endSceneIdx;
             EndScene = memory.Read<int>(pEndScene);
         }
-        public int EndScene { get; private set; }
 
-        public int pEndScene { get; private set; }
+        #endregion Constructors
+
+        #region Fields
+
+        private const int c_dxDevice = 0xC5DF88;  // ?
+        private const int c_dxDeviceIdx = 0x397C; // **IDirect3DDevice9
+        private const int c_endSceneIdx = 0xA8;
+
+        #endregion Fields
+
+        #region Properties
+
+        public int EndScene { get; }
+
+        public int pEndScene { get; }
+
+        #endregion Properties
     }
 }

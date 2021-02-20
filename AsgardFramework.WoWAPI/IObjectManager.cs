@@ -1,14 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using AsgardFramework.WoWAPI.Objects;
+
 namespace AsgardFramework.WoWAPI
 {
     public interface IObjectManager
     {
-        Task<IEnumerable<Objects.ObjectData>> GetObjects(bool setAllFields);
+        #region Methods
 
-        Task<Objects.ObjectData> GetPlayer();
+        Task<ObjectData> GetObjectByGuidAsync(ulong guid);
 
-        Task<Objects.ObjectData> GetObjectByGuid(ulong guid);
+        Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields);
+
+        Task<ObjectData> GetPlayerAsync();
+
+        #endregion Methods
     }
 }

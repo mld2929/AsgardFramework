@@ -9,130 +9,146 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal partial class FunctionsAccessor : IGameFunctions
     {
-        public Task AscendStop() {
+        #region Methods
+
+        public Task AscendStopAsync() {
             throw new NotImplementedException();
         }
 
-        public async Task CastSpell(int spellId, ulong target) {
-            const int c_castSpell = 0x0080DA40;
-            var asm = new string[]
-            {
+        public Task CastSpellAsync(int spellId, ulong target) {
+            const int castSpell = 0x0080DA40;
+
+            var asm = new[] {
                 "push 0 0 0 0",
                 target.Push(),
                 "push 0 " + spellId,
-                "mov eax, " + c_castSpell,
+                "mov eax, " + castSpell,
                 "call eax",
-                "add esp, 0x20",
+                "add esp, 0x20"
             };
-            await m_executor.Execute(new CompiledCodeBlock(m_compiler.Assemble(asm).ToArray()));
+
+            return m_executor.ExecuteAsync(new CompiledCodeBlock(m_compiler.Assemble(asm)
+                                                                           .ToArray()));
         }
 
-        public Task ClickToMove(float x, float y, float z, int ctmState, ulong playerOrTargetGuid, float precision) {
+        public Task ClickToMoveAsync(float x,
+                                     float y,
+                                     float z,
+                                     int ctmState,
+                                     ulong playerOrTargetGuid,
+                                     float precision) {
             throw new NotImplementedException();
         }
 
-        public Task<int> GetItemIdByName(string itemName) {
+        public Task<int> GetItemIdByNameAsync(string itemName) {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetName(int objBase) {
+        public Task<string> GetNameAsync(int objBase) {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetPlayerName() {
+        public Task<string> GetPlayerNameAsync() {
             throw new NotImplementedException();
         }
 
-        public async Task<Position> GetPosition(int objBase) {
-            const int c_getPositionOffset = 12 * 4;
-            var getPosition = m_memory.Read<int>(m_memory.Read<int>(objBase) + c_getPositionOffset);
-            var size = sizeof(float) * 4;
-            if (!m_buffer.TryReserve(size, out var buffer)) {
-                throw new OutOfMemoryException();
-            }
+        public async Task<Position> GetPositionAsync(int objBase) {
+            const int getPositionOffset = 12 * 4;
+            const int size = sizeof(float) * 4;
+            var getPosition = m_memory.Read<int>(m_memory.Read<int>(objBase) + getPositionOffset);
 
-            var asm = new string[] {
+            if (!m_buffer.TryReserve(size, out var buffer))
+                throw new InvalidOperationException();
+
+            var asm = new[] {
                 $"mov ecx, {objBase}", // this
                 $"mov eax, {getPosition}",
                 $"push {buffer.Start}",
                 "call eax"
             };
-            await m_executor.Execute(new CompiledCodeBlock(m_compiler.Assemble(asm).ToArray()));
+
+            await m_executor.ExecuteAsync(new CompiledCodeBlock(m_compiler.Assemble(asm)
+                                                                          .ToArray()))
+                            .ConfigureAwait(false);
+
             var result = m_memory.Read<Position>(buffer.Start);
             buffer.Dispose();
+
             return result;
         }
 
-        public Task<bool> HasAuraBySpellId(int objBase, int spellId) {
+        public Task<bool> HasAuraBySpellIdAsync(int objBase, int spellId) {
             throw new NotImplementedException();
         }
 
-        public Task Interact(int objBase) {
+        public Task InteractAsync(int objBase) {
             throw new NotImplementedException();
         }
 
-        public Task JumpOrAscendStart() {
+        public Task JumpOrAscendStartAsync() {
             throw new NotImplementedException();
         }
 
-        public Task MoveBackwardStart() {
+        public Task MoveBackwardStartAsync() {
             throw new NotImplementedException();
         }
 
-        public Task MoveBackwardStop() {
+        public Task MoveBackwardStopAsync() {
             throw new NotImplementedException();
         }
 
-        public Task MoveForwardStart() {
+        public Task MoveForwardStartAsync() {
             throw new NotImplementedException();
         }
 
-        public Task MoveForwardStop() {
+        public Task MoveForwardStopAsync() {
             throw new NotImplementedException();
         }
 
-        public Task ObjectOnClick(int objBase) {
+        public Task ObjectOnClickAsync(int objBase) {
             throw new NotImplementedException();
         }
 
-        public Task SellItem(ulong itemGuid, ulong vendorGuid) {
+        public Task SellItemAsync(ulong itemGuid, ulong vendorGuid) {
             throw new NotImplementedException();
         }
 
-        public Task StartEnterWorld() {
+        public Task StartEnterWorldAsync() {
             throw new NotImplementedException();
         }
 
-        public Task StartLoginToDefaultServer(string login, string password) {
+        public Task StartLoginToDefaultServerAsync(string login, string password) {
             throw new NotImplementedException();
         }
 
-        public Task Target(ulong guid) {
+        public Task TargetUnitAsync(ulong guid) {
             throw new NotImplementedException();
         }
 
-        public Task TurnLeftStart() {
+        public Task TurnLeftStartAsync() {
             throw new NotImplementedException();
         }
 
-        public Task TurnLeftStop() {
+        public Task TurnLeftStopAsync() {
             throw new NotImplementedException();
         }
 
-        public Task TurnRightStart() {
+        public Task TurnRightStartAsync() {
             throw new NotImplementedException();
         }
 
-        public Task TurnRightStop() {
+        public Task TurnRightStopAsync() {
             throw new NotImplementedException();
         }
 
-        public Task UnitOnClick(int unitBase) {
+        public Task UnitOnClickAsync(int unitBase) {
             throw new NotImplementedException();
         }
 
-        public Task UseItem(int itemBase, ulong itemGuid) {
+        public Task UseItemAsync(int itemBase, ulong itemGuid) {
             throw new NotImplementedException();
         }
+
+        #endregion Methods
     }
 }

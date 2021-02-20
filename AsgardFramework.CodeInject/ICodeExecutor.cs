@@ -4,6 +4,10 @@ namespace AsgardFramework.CodeInject
 {
     public interface ICodeExecutor
     {
-        Task<int> Execute(ICodeBlock code);
+        #region Methods
+
+        Task<int> ExecuteAsync(ICodeBlock code);
+
+        #endregion Methods
     }
 }

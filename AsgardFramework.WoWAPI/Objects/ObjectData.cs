@@ -2,15 +2,29 @@
 {
     public class ObjectData
     {
+        #region Fields
+
         internal readonly int Base;
-        public Common Common { get; internal set; }
-        public Position Position { get; internal set; }
-        public Object Object { get; internal set; }
+
+        #endregion Fields
+
+        #region Constructors
+
         internal ObjectData(int baseAddress, Common common, Position position, Object obj) {
             Base = baseAddress;
             Common = common;
             Position = position;
             Object = obj;
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        public Common Common { get; }
+        public Object Object { get; internal set; }
+        public Position Position { get; internal set; }
+
+        #endregion Properties
     }
 }

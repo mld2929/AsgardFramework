@@ -4,7 +4,10 @@ namespace AsgardFramework.WoWAPI
 {
     public interface IInjectedFunctions
     {
-        Task SwitchAntiAFK(bool enabled);
+        #region Methods
 
+        Task SwitchAntiAFKAsync(bool enabled);
+
+        #endregion Methods
     }
 }

@@ -7,15 +7,27 @@ namespace AsgardFramework.CodeInject
 {
     public class DefaultCodeInjector : ICodeInjector
     {
-        private static readonly byte[] c_ret = new byte[] { 0xC3 };
+        #region Fields
+
+        private static readonly byte[] Ret = {
+            0xC3
+        };
+
+        #endregion Fields
+
+        #region Methods
+
         public void Inject(IMemory memory, ICodeBlock code, int offset) {
             InjectWithoutRet(memory, code, offset);
-            memory.Write(offset + code.Compiled.Length, c_ret);
+            memory.Write(offset + code.Compiled.Length, Ret);
         }
+
         public void Inject(IMemory memory, IEnumerable<ICodeBlock> blocks, int offset) {
-            InjectWithoutRet(memory, blocks, offset);
-            memory.Write(blocks.Sum(b => b.Compiled.Length) + offset, c_ret);
+            var codeBlocks = blocks.ToList();
+            InjectWithoutRet(memory, codeBlocks, offset);
+            memory.Write(codeBlocks.Sum(b => b.Compiled.Length) + offset, Ret);
         }
+
         public void InjectWithoutRet(IMemory memory, ICodeBlock code, int offset) {
             memory.Write(offset, code.Compiled);
         }
@@ -26,5 +38,7 @@ namespace AsgardFramework.CodeInject
                 offset += block.Compiled.Length;
             }
         }
+
+        #endregion Methods
     }
 }

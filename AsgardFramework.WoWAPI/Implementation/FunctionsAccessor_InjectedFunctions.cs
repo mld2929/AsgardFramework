@@ -5,8 +5,12 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal partial class FunctionsAccessor : IInjectedFunctions
     {
-        public Task SwitchAntiAFK(bool enabled) {
+        #region Methods
+
+        public Task SwitchAntiAFKAsync(bool enabled) {
             throw new NotImplementedException();
         }
+
+        #endregion Methods
     }
 }

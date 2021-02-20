@@ -2,10 +2,14 @@
 {
     public interface IGlobalMemory : IMemory
     {
+        #region Methods
+
         IAutoManagedMemory Allocate(int size);
+
+        IAutoManagedSharedBuffer AllocateAutoScalingShared(int minSize);
 
         IAutoManagedSharedBuffer AllocateShared(int size);
 
-        IAutoManagedSharedBuffer AllocateAutoScalingShared(int minSize);
+        #endregion Methods
     }
 }

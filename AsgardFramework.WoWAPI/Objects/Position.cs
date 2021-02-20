@@ -2,12 +2,19 @@
 
 namespace AsgardFramework.WoWAPI.Objects
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 16)]
     public class Position
     {
-        public readonly float X;
-        public readonly float Y;
-        public readonly float Z;
+        [FieldOffset(12)]
         public readonly float Rotation;
+
+        [FieldOffset(0)]
+        public readonly float X;
+
+        [FieldOffset(4)]
+        public readonly float Y;
+
+        [FieldOffset(8)]
+        public readonly float Z;
     }
 }

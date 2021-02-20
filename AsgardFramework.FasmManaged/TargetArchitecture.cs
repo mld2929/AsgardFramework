@@ -11,17 +11,17 @@ namespace AsgardFramework.FasmManaged
 
     internal static class TargetArchitectureHelper
     {
+        #region Methods
+
         internal static string AsString(this TargetArchitecture architecture) {
-            switch (architecture) {
-                case TargetArchitecture.x86_64:
-                    return string.Empty;
-                case TargetArchitecture.x86:
-                    return "use32\n";
-                case TargetArchitecture.x64:
-                    return "use64\n";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(architecture));
-            }
+            return architecture switch {
+                TargetArchitecture.x86_64 => string.Empty,
+                TargetArchitecture.x86 => "use32\n",
+                TargetArchitecture.x64 => "use64\n",
+                _ => throw new ArgumentOutOfRangeException(nameof(architecture))
+            };
         }
+
+        #endregion Methods
     }
 }

@@ -2,10 +2,18 @@
 {
     public class CompiledCodeBlock : ICodeBlock
     {
-        public byte[] Compiled { get; private set; }
+        #region Constructors
 
         public CompiledCodeBlock(byte[] compiled) {
             Compiled = compiled;
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        public byte[] Compiled { get; }
+
+        #endregion Properties
     }
 }
