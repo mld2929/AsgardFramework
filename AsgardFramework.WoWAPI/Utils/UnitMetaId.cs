@@ -141,10 +141,7 @@ namespace AsgardFramework.WoWAPI.Utils
         /// </param>
         /// <returns><see cref="Target" /> of <paramref name="left" /> in valid usage; otherwise <paramref name="left" /></returns>
         public static UnitMetaId operator+(UnitMetaId left, UnitMetaId right) {
-            if (right == Target)
-                return new UnitMetaId(left.m_metaId + right.m_metaId);
-
-            return left;
+            return right == Target ? new UnitMetaId(left.m_metaId + right.m_metaId) : left;
         }
 
         #endregion Methods

@@ -41,18 +41,19 @@ namespace AsgardFramework.Memory
                                   .Min();
                 }
 
-                if (min != null) {
-                    if (min.Size - size != 0) {
-                        var (left, right) = min.Split(size);
-                        var index = m_blocks.IndexOf(min);
-                        m_blocks.RemoveAt(index);
-                        m_blocks.Insert(index, right);
-                        m_blocks.Insert(index, left);
-                        min = left;
-                    }
+                if (min == null)
+                    return false;
 
-                    reserved = new SharedBlock(min, m_processHandle);
+                if (min.Size - size != 0) {
+                    var (left, right) = min.Split(size);
+                    var index = m_blocks.IndexOf(min);
+                    m_blocks.RemoveAt(index);
+                    m_blocks.Insert(index, right);
+                    m_blocks.Insert(index, left);
+                    min = left;
                 }
+
+                reserved = new SharedBlock(min, m_processHandle);
             }
 
             return reserved != null;

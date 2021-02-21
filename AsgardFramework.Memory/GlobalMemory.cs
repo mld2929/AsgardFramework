@@ -1,86 +1,78 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace AsgardFramework.Memory
 {
-    public class GlobalMemory : IGlobalMemory
+    public sealed class GlobalMemory : KernelDrivenMemoryBase, IGlobalMemory
     {
-        #region Fields
-
-        private readonly SafeHandle m_handle;
-
-        #endregion Fields
-
         #region Constructors
 
-        public GlobalMemory(int processId) {
-            m_handle = Kernel.OpenProcess(Kernel.c_allAccess, true, processId);
-
-            if (m_handle.IsInvalid)
-                throw new InvalidOperationException();
-
-            var weakThis = new WeakReference<GlobalMemory>(this);
-
-            AppDomain.CurrentDomain.ProcessExit += (_, __) => {
-                if (weakThis.TryGetTarget(out var @this))
-                    @this.m_handle.Dispose();
-            };
-        }
+        public GlobalMemory(int processId) : base(Kernel.OpenProcess(Kernel.c_allAccess, true, processId)) { }
 
         #endregion Constructors
+
+        #region Properties
+
+        public override bool IsInvalid => m_processHandle.IsInvalid;
+
+        #endregion Properties
 
         #region Methods
 
         public IAutoManagedMemory Allocate(int size) {
-            size += size % 1024 == 0 ? 0 : 1024 - size % 1024;
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(GlobalMemory));
 
-            return new AutoManagedMemory(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, size), m_handle, size);
+            size = calculateSize(size);
+            var memory = new AutoManagedMemory(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, size), m_processHandle, size);
+            addWeakHandlerFor(memory);
+
+            return memory;
         }
 
         public IAutoManagedSharedBuffer AllocateAutoScalingShared(int minSize) {
-            minSize += minSize % 1024 == 0 ? 0 : 1024 - minSize % 1024;
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(GlobalMemory));
 
-            return new AutoScalingSharedBuffer(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, minSize), m_handle, minSize, AllocateShared);
+            minSize = calculateSize(minSize);
+
+            var memory = new AutoScalingSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, minSize), m_processHandle, minSize, AllocateShared);
+            addWeakHandlerFor(memory);
+
+            return memory;
         }
 
         public IAutoManagedSharedBuffer AllocateShared(int size) {
-            size += size % 1024 == 0 ? 0 : 1024 - size % 1024;
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(GlobalMemory));
 
-            return new AutoManagedSharedBuffer(Kernel.VirtualAllocEx(m_handle, IntPtr.Zero, size), m_handle, size);
+            size = calculateSize(size);
+
+            var memory = new AutoManagedSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, size), m_processHandle, size);
+            addWeakHandlerFor(memory);
+
+            return memory;
         }
 
-        public byte[] Read(int offset, int count) {
-            var buffer = new byte[count];
-            Kernel.ReadProcessMemory(m_handle, offset, buffer, count, out var _);
+        protected override bool ReleaseHandle() {
+            m_processHandle.Dispose();
 
-            return buffer;
+            return m_processHandle.IsClosed;
         }
 
-        public T Read<T>(int offset) where T : new() {
-            var bytes = new byte[Marshal.SizeOf<T>()];
-            Kernel.ReadProcessMemory(m_handle, offset, bytes, bytes.Length, out var _);
+        private static int calculateSize(int requested) {
+            var mod = requested % 1024;
+            requested += mod == 0 ? 0 : 1024 - mod;
 
-            unsafe {
-                fixed (byte* buffer = bytes) {
-                    return Marshal.PtrToStructure<T>((IntPtr)buffer);
-                }
-            }
+            return requested;
         }
 
-        public void Write(int offset, byte[] data) {
-            Kernel.WriteProcessMemory(m_handle, offset, data, data.Length, out var _);
-        }
+        private void addWeakHandlerFor(IAutoManagedMemory memory) {
+            var weak = new WeakReference<IAutoManagedMemory>(memory);
 
-        public void Write<T>(int offset, T data) where T : new() {
-            var bytes = new byte[Marshal.SizeOf<T>()];
-
-            unsafe {
-                fixed (byte* buffer = bytes) {
-                    Marshal.StructureToPtr(data, (IntPtr)buffer, true);
-                }
-            }
-
-            Kernel.WriteProcessMemory(m_handle, offset, bytes, bytes.Length, out var _);
+            Disposing += (_, __) => {
+                if (weak.TryGetTarget(out var mem) && !mem.Disposed)
+                    mem.Dispose();
+            };
         }
 
         #endregion Methods

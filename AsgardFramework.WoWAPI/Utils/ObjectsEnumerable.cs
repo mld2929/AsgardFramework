@@ -1,6 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 using AsgardFramework.Memory;
 using AsgardFramework.WoWAPI.Objects;
@@ -70,7 +70,7 @@ namespace AsgardFramework.WoWAPI.Utils
         }
 
         public bool MoveNext() {
-            m_current = m_current == 0 ? m_first : Current.Common.Next;
+            m_current = m_current == 0 ? m_first : Current?.Common.Next ?? throw new InvalidOperationException($"{nameof(Current)} is null");
 
             return !(m_current == 0 || m_current % 2 != 0);
         }

@@ -179,6 +179,7 @@ namespace AsgardFramework.FasmManaged
                         case FASM_CONDITION.FASM_ERROR:
                             if (state == null)
                                 throw new FasmException(condition.ToString());
+
                             throw new FasmLineErrorException(Marshal.PtrToStructure<LINE_HEADER>((IntPtr)state.ErrorLine), state.ErrorCode.ToString());
                         case FASM_CONDITION.FASM_WORKING:
                         case FASM_CONDITION.FASM_INVALID_PARAMETER:

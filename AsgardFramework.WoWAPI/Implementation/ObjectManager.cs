@@ -46,12 +46,23 @@ namespace AsgardFramework.WoWAPI.Implementation
         #region Methods
 
         public async Task<ObjectData> GetObjectByGuidAsync(ulong guid) {
-            return (await GetObjectsAsync(true)
-                        .ConfigureAwait(false)).FirstOrDefault(o => o.Object.Guid == guid);
+            var obj = getRawEnumerable()
+                .FirstOrDefault(o => o.Common.Guid == guid);
+
+            if (obj == null)
+                return null;
+
+            obj.Position = await m_functions.GetPositionAsync(obj.Base)
+                                            .ConfigureAwait(false);
+
+            obj.Object = readObject(obj.Common, m_playerGuid);
+
+            return obj;
         }
 
         public async Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields) {
-            var objects = new ObjectsEnumerable(m_memory, m_objListStart).ToList();
+            var objects = getRawEnumerable()
+                .ToList();
 
             if (!setAllFields)
                 return objects;
@@ -59,48 +70,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var playerGuid = m_playerGuid;
 
             foreach (var obj in objects) {
-                switch (obj.Common.Type) {
-                    case ObjectType.Item:
-                        obj.Object = m_memory.Read<Item>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.Container:
-                        obj.Object = m_memory.Read<Container>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.Unit:
-                        obj.Object = m_memory.Read<Unit>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.Player:
-                        obj.Object = m_memory.Read<Unit>(obj.Common.Fields);
-
-                        if (obj.Object.Guid == playerGuid)
-                            obj.Object = m_memory.Read<Player>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.GameObject:
-                        obj.Object = m_memory.Read<GameObject>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.DynamicObject:
-                        obj.Object = m_memory.Read<DynamicObject>(obj.Common.Fields);
-
-                        break;
-
-                    case ObjectType.Corpse:
-                        obj.Object = m_memory.Read<Corpse>(obj.Common.Fields);
-
-                        break;
-
-                    default:
-                        continue;
-                }
+                obj.Object = readObject(obj.Common, playerGuid);
 
                 obj.Position = await m_functions.GetPositionAsync(obj.Base)
                                                 .ConfigureAwait(false);
@@ -109,18 +79,25 @@ namespace AsgardFramework.WoWAPI.Implementation
             return objects;
         }
 
-        public async Task<ObjectData> GetPlayerAsync() {
-            var playerGuid = m_playerGuid;
+        public Task<ObjectData> GetPlayerAsync() {
+            return GetObjectByGuidAsync(m_playerGuid);
+        }
 
-            var player = (await GetObjectsAsync(false)
-                              .ConfigureAwait(false)).First(obj => obj.Common.Guid == playerGuid);
+        private IEnumerable<ObjectData> getRawEnumerable() {
+            return new ObjectsEnumerable(m_memory, m_objListStart);
+        }
 
-            player.Object = m_memory.Read<Player>(player.Base);
-
-            player.Position = await m_functions.GetPositionAsync(player.Base)
-                                               .ConfigureAwait(false);
-
-            return player;
+        private Object readObject(Common commonData, ulong playerGuid) {
+            return commonData?.Type switch {
+                ObjectType.Item => m_memory.Read<Item>(commonData.Fields),
+                ObjectType.Container => m_memory.Read<Container>(commonData.Fields),
+                ObjectType.Unit => m_memory.Read<Unit>(commonData.Fields),
+                ObjectType.Player => commonData.Guid == playerGuid ? m_memory.Read<Player>(commonData.Fields) : m_memory.Read<Unit>(commonData.Fields),
+                ObjectType.GameObject => m_memory.Read<GameObject>(commonData.Fields),
+                ObjectType.DynamicObject => m_memory.Read<DynamicObject>(commonData.Fields),
+                ObjectType.Corpse => m_memory.Read<Corpse>(commonData.Fields),
+                _ => null
+            };
         }
 
         #endregion Methods

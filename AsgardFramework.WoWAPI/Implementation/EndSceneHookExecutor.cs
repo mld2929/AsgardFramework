@@ -11,11 +11,13 @@ using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
-    internal class EndSceneHookExecutor : CriticalHandle, ICodeExecutor
+    internal sealed class EndSceneHookExecutor : SafeHandle, ICodeExecutor
     {
         #region Constructors
 
-        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) : base((IntPtr)observer.EndScene) {
+        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) : base(IntPtr.Zero, true) {
+            handle = (IntPtr)observer.EndScene;
+
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;
@@ -25,12 +27,11 @@ namespace AsgardFramework.WoWAPI.Implementation
             var hook = new[] {
                 "pushad",
                 "pushfd",
-                $"cmp dword [{m_hookSpace.Start + c_flagOffset}], 0",
+                $"cmp dword [{m_hookSpace + c_flagOffset}], 0",
                 "je @out",
-                $"mov eax, {m_hookSpace.Start + c_executionOffset}",
-                "call eax",
-                $"mov dword [{m_hookSpace.Start + c_resultOffset}], eax",
-                $"mov dword [{m_hookSpace.Start + c_flagOffset}], 0",
+                (m_hookSpace.Start + c_executionOffset).CallViaEax(),
+                $"mov dword [{m_hookSpace + c_resultOffset}], eax",
+                $"mov dword [{m_hookSpace + c_flagOffset}], 0",
                 "@out:",
                 "popfd",
                 "popad",
@@ -45,7 +46,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             m_memory.Write(m_observer.pEndScene, m_hookSpace.Start);
             var weakThis = new WeakReference<EndSceneHookExecutor>(this);
 
-            AppDomain.CurrentDomain.ProcessExit += (_, __) => {
+            m_hookSpace.Disposing += (_, __) => {
                 if (weakThis.TryGetTarget(out var @this))
                     @this.Dispose();
             };
@@ -77,14 +78,17 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public override bool IsInvalid => m_memory.Read<int>(m_observer.pEndScene) == m_observer.EndScene;
         public int Result => m_memory.Read<int>(m_pResult);
-        private int m_pFlag => m_hookSpace.Start + c_flagOffset;
-        private int m_pResult => m_hookSpace.Start + c_resultOffset;
+        private int m_pFlag => m_hookSpace + c_flagOffset;
+        private int m_pResult => m_hookSpace + c_resultOffset;
 
         #endregion Properties
 
         #region Methods
 
         public async Task<int> ExecuteAsync(ICodeBlock code) {
+            if (IsClosed)
+                throw new ObjectDisposedException(nameof(EndSceneHookExecutor));
+
             var injection = code;
 
             if (code.Compiled.Length > m_hookSpace.Size - c_executionOffset) {
@@ -112,13 +116,12 @@ namespace AsgardFramework.WoWAPI.Implementation
         protected override bool ReleaseHandle() {
             m_memory.Write(m_observer.pEndScene, m_observer.EndScene);
 
-            return IsInvalid;
+            return IsClosed;
         }
 
         private ICodeBlock jumpToExtraSpace(IAutoManagedMemory space) {
             var asm = new[] {
-                $"mov eax, {space.Start}",
-                "call eax",
+                space.Start.CallViaEax(),
                 "ret"
             };
 

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace AsgardFramework.Memory
 {
     // work in progress, now buffer is very slow and fragmented
-    internal class AutoScalingSharedBuffer : AutoManagedSharedBuffer
+    internal sealed class AutoScalingSharedBuffer : AutoManagedSharedBuffer
     {
         #region Constructors
 

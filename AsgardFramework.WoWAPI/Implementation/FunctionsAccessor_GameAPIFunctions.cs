@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 
+using AsgardFramework.CodeInject;
 using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -14,7 +17,10 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public Task DismountAsync() {
-            throw new NotImplementedException();
+            const int dismount = 0x0051D170;
+            var bytes = m_compiler.Assemble(dismount.CallViaEax());
+
+            return m_executor.ExecuteAsync(new CompiledCodeBlock(bytes.ToArray()));
         }
 
         public Task EquipItemAsync(string name) {
@@ -69,11 +75,11 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<bool> HasPlayerFullControlAsync() {
+        public Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName) {
             throw new NotImplementedException();
         }
 
-        public Task<bool> IsPlayerFallingAsync() {
+        public Task<bool> HasPlayerFullControlAsync() {
             throw new NotImplementedException();
         }
 
@@ -89,7 +95,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<bool> UnitIsPlayerAsync(string unitMetaId) {
+        public Task<bool> IsPlayerFallingAsync() {
             throw new NotImplementedException();
         }
 
@@ -98,7 +104,14 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public Task LootSlotAsync(int slotNumberFromOne) {
-            throw new NotImplementedException();
+            const int lootSlot = 0x00589520;
+            var script = new LuaVMWrapper();
+
+            var compiled = script.PushInt(slotNumberFromOne)
+                                 .CallLuaFunction(lootSlot)
+                                 .CompileScript(m_compiler);
+
+            return m_executor.ExecuteAsync(compiled);
         }
 
         public Task RunScriptAsync(string luaScript) {
@@ -109,7 +122,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName) {
+        public Task<bool> UnitIsPlayerAsync(string unitMetaId) {
             throw new NotImplementedException();
         }
 

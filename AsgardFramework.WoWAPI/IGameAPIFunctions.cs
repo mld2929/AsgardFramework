@@ -179,14 +179,15 @@ namespace AsgardFramework.WoWAPI
         Task<UnitClassInfo> GetUnitClassAsync(string unitMetaIdOrName);
 
         /// <summary>
+        ///     Returns a unit's primary faction allegiance
+        /// </summary>
+        /// <param name="unitMetaIdOrName">The name of a unit to query only valid for player, pet, and party/raid members</param>
+        Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName);
+
+        /// <summary>
         ///     Returns whether the player character can be controlled
         /// </summary>
         Task<bool> HasPlayerFullControlAsync();
-
-        /// <summary>
-        ///     Returns whether the player is currently falling
-        /// </summary>
-        Task<bool> IsPlayerFallingAsync();
 
         /// <summary>
         ///     Returns whether the login process has completed
@@ -204,10 +205,9 @@ namespace AsgardFramework.WoWAPI
         Task<bool> IsOutdoorsAsync();
 
         /// <summary>
-        ///     Returns whether a unit is a player unit (not an NPC)
+        ///     Returns whether the player is currently falling
         /// </summary>
-        /// <param name="unitMetaId">A unit to query</param>
-        Task<bool> UnitIsPlayerAsync(string unitMetaId);
+        Task<bool> IsPlayerFallingAsync();
 
         /// <summary>
         ///     Returns whether a unit is currently in combat
@@ -233,10 +233,10 @@ namespace AsgardFramework.WoWAPI
         Task StartFollowUnitAsync(string unitMetaIdOrName);
 
         /// <summary>
-        ///     Returns a unit's primary faction allegiance
+        ///     Returns whether a unit is a player unit (not an NPC)
         /// </summary>
-        /// <param name="unitMetaIdOrName">The name of a unit to query only valid for player, pet, and party/raid members</param>
-        Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName);
+        /// <param name="unitMetaId">A unit to query</param>
+        Task<bool> UnitIsPlayerAsync(string unitMetaId);
 
         #endregion Methods
     }
