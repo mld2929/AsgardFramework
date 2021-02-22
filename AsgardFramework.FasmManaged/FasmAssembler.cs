@@ -36,9 +36,12 @@ namespace AsgardFramework.FasmManaged
         #region Fields
 
         private const int c_defaultBufferSize = 8 * 1024 * 1024; // 8 MB
+
         private const string c_dllName = "FASM.DLL";
+
+        private static readonly object m_locker = new object();
+
         private readonly byte[] m_buffer = new byte[c_defaultBufferSize];
-        private readonly object m_locker = new object();
 
         #endregion Fields
 
@@ -180,7 +183,7 @@ namespace AsgardFramework.FasmManaged
                             if (state == null)
                                 throw new FasmException(condition.ToString());
 
-                            throw new FasmLineErrorException(Marshal.PtrToStructure<LINE_HEADER>((IntPtr)state.ErrorLine), state.ErrorCode.ToString());
+                            throw new FasmLineErrorException(Marshal.PtrToStructure<LINE_HEADER>((IntPtr)state.ErrorLine), state.ErrorCode.ToString(), fromFile ? null : data);
                         case FASM_CONDITION.FASM_WORKING:
                         case FASM_CONDITION.FASM_INVALID_PARAMETER:
                         case FASM_CONDITION.FASM_OUT_OF_MEMORY:

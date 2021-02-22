@@ -8,6 +8,8 @@ namespace AsgardFramework.CodeInject
 
         Task<int> ExecuteAsync(ICodeBlock code);
 
+        Task StartExecutePermanentlyAsync(ICodeBlock code);
+
         #endregion Methods
     }
 }

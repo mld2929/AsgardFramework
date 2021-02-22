@@ -4,7 +4,14 @@
     {
         #region Properties
 
+        /// <summary>
+        ///     HRESULT (*EndScene)()
+        /// </summary>
         int EndScene { get; }
+
+        /// <summary>
+        ///     *<see cref="EndScene" />
+        /// </summary>
         int pEndScene { get; }
 
         #endregion Properties

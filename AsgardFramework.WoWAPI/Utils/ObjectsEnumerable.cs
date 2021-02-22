@@ -50,7 +50,9 @@ namespace AsgardFramework.WoWAPI.Utils
         #region Fields
 
         private readonly int m_first;
+
         private readonly IGlobalMemory m_memory;
+
         private int m_current;
 
         #endregion Fields
@@ -70,7 +72,7 @@ namespace AsgardFramework.WoWAPI.Utils
         }
 
         public bool MoveNext() {
-            m_current = m_current == 0 ? m_first : Current?.Common.Next ?? throw new InvalidOperationException($"{nameof(Current)} is null");
+            m_current = m_current == 0 ? m_first : Current?.Common?.Next ?? throw new InvalidOperationException($"{nameof(Current.Common)} is null");
 
             return !(m_current == 0 || m_current % 2 != 0);
         }

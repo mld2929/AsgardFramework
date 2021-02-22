@@ -33,12 +33,19 @@ namespace AsgardFramework.WoWAPI.Implementation
         #region Fields
 
         private const int c_firstObjOffset = 0xAC;
+
         private const int c_objManagerOffset = 0x2ED0;
+
         private const int c_playerGuidOffset = 0xC0;
+
         private const int c_staticClientConnection = 0x00C79CE0;
+
         private readonly IGameFunctions m_functions;
+
         private readonly IGlobalMemory m_memory;
+
         private readonly int m_objListStart;
+
         private readonly int m_pPlayerGuid;
 
         #endregion Fields

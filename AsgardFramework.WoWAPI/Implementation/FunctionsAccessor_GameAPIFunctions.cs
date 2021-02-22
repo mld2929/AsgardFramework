@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-using AsgardFramework.CodeInject;
+using AsgardFramework.Memory;
 using AsgardFramework.WoWAPI.Info;
 using AsgardFramework.WoWAPI.Utils;
 
@@ -18,9 +18,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public Task DismountAsync() {
             const int dismount = 0x0051D170;
-            var bytes = m_compiler.Assemble(dismount.CallViaEax());
+            var bytes = m_assembler.Assemble(dismount.CallViaEax());
 
-            return m_executor.ExecuteAsync(new CompiledCodeBlock(bytes.ToArray()));
+            return m_executor.ExecuteAsync(bytes.ToCodeBlock());
         }
 
         public Task EquipItemAsync(string name) {
@@ -56,11 +56,18 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public Task<SpellInfo> GetSpellInfoAsync(int spellId) {
-            throw new NotImplementedException();
+            return getSpellInfoImplAsync(new LuaVMWrapper().PushInt(spellId));
         }
 
-        public Task<SpellInfo> GetSpellInfoAsync(string spellName) {
-            throw new NotImplementedException();
+        public async Task<SpellInfo> GetSpellInfoAsync(string spellName) {
+            var ptr = stringToPtr(spellName);
+
+            var info = await getSpellInfoImplAsync(new LuaVMWrapper().PushStringPtr(ptr.Start))
+                           .ConfigureAwait(false);
+
+            ptr.Dispose();
+
+            return info;
         }
 
         public Task<UnitAuraInfo> GetUnitAuraAsync(string unitMetaId, int index, string filter = null) {
@@ -109,7 +116,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 
             var compiled = script.PushInt(slotNumberFromOne)
                                  .CallLuaFunction(lootSlot)
-                                 .CompileScript(m_compiler);
+                                 .CompileScript(m_assembler);
 
             return m_executor.ExecuteAsync(compiled);
         }
@@ -124,6 +131,42 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public Task<bool> UnitIsPlayerAsync(string unitMetaId) {
             throw new NotImplementedException();
+        }
+
+        private async Task<SpellInfo> getSpellInfoImplAsync(LuaVMWrapper withPushedArgument) {
+            const int getSpellInfo = 0x00540A30;
+            const int spellInfoSize = 48;
+
+            var spellInfo = m_buffer.Reserve(spellInfoSize);
+
+            var script = withPushedArgument.CallLuaFunction(getSpellInfo)
+                                           .PopStringStr(spellInfo) // Name
+                                           .PopStringStr(spellInfo) // Rank or secondary
+                                           .PopStringStr(spellInfo) // Icon
+                                           .PopNumber(spellInfo)    // Cost
+                                           .PopInteger(spellInfo)   // IsFunnel
+                                           .PopInteger(spellInfo)   // Power type
+                                           .PopInteger(spellInfo)   // Cast time (milliseconds)
+                                           .PopNumber(spellInfo)    // Min range
+                                           .PopNumber(spellInfo)    // Max range
+                                           .CompileScript(m_assembler);
+
+            await m_executor.ExecuteAsync(script)
+                            .ConfigureAwait(false);
+
+            var result = new SpellInfo(spellInfo.Read<SpellInfoRaw>(0), m_memory);
+            spellInfo.Dispose();
+
+            return result;
+        }
+
+        private IAutoManagedMemory stringToPtr(string value) {
+            var size = Encoding.UTF8.GetByteCount(value) + 1;
+
+            var reserved = m_buffer.Reserve(size);
+            reserved.WriteNullTerminatedString(0, value, Encoding.UTF8);
+
+            return reserved;
         }
 
         #endregion Methods

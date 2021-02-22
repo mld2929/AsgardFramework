@@ -12,6 +12,8 @@ namespace AsgardFramework.Memory
 
         #region Methods
 
+        IAutoManagedMemory Reserve(int size);
+
         bool TryReserve(int size, out IAutoManagedMemory reserved);
 
         #endregion Methods

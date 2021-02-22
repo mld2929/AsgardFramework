@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+
+using AsgardFramework.CodeInject;
 
 namespace AsgardFramework.WoWAPI.Utils
 {
@@ -36,6 +39,10 @@ namespace AsgardFramework.WoWAPI.Utils
 
         internal static byte[] ToBytes(this bool value) {
             return BitConverter.GetBytes(value);
+        }
+
+        internal static ICodeBlock ToCodeBlock(this IEnumerable<byte> bytes) {
+            return new CompiledCodeBlock(bytes.ToArray());
         }
 
         internal static float ToFloat(this byte[] bytes) {

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 
-using AsgardFramework.CodeInject;
 using AsgardFramework.WoWAPI.Objects;
+using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -27,8 +26,8 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "add esp, 0x20"
             };
 
-            return m_executor.ExecuteAsync(new CompiledCodeBlock(m_compiler.Assemble(asm)
-                                                                           .ToArray()));
+            return m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+                                                      .ToCodeBlock());
         }
 
         public Task ClickToMoveAsync(float x,
@@ -58,7 +57,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var getPosition = m_memory.Read<int>(m_memory.Read<int>(objBase) + getPositionOffset);
 
             if (!m_buffer.TryReserve(size, out var buffer))
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("Can't reserve memory");
 
             var asm = new[] {
                 $"mov ecx, {objBase}", // this
@@ -67,8 +66,8 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "call eax"
             };
 
-            await m_executor.ExecuteAsync(new CompiledCodeBlock(m_compiler.Assemble(asm)
-                                                                          .ToArray()))
+            await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+                                                     .ToCodeBlock())
                             .ConfigureAwait(false);
 
             var result = m_memory.Read<Position>(buffer.Start);

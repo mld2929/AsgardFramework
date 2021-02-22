@@ -29,7 +29,7 @@ namespace AsgardFramework.Memory
             return memory;
         }
 
-        public IAutoManagedSharedBuffer AllocateAutoScalingShared(int minSize) {
+        public IAutoScalingSharedBuffer AllocateAutoScalingShared(int minSize) {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(GlobalMemory));
 

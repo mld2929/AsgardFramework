@@ -6,7 +6,7 @@
 
         IAutoManagedMemory Allocate(int size);
 
-        IAutoManagedSharedBuffer AllocateAutoScalingShared(int minSize);
+        IAutoScalingSharedBuffer AllocateAutoScalingShared(int minSize);
 
         IAutoManagedSharedBuffer AllocateShared(int size);
 

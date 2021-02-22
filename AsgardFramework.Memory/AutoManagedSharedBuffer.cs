@@ -21,11 +21,19 @@ namespace AsgardFramework.Memory
         #region Fields
 
         private readonly List<SharedBlockData> m_blocks;
+
         private readonly object m_lock = new object();
 
         #endregion Fields
 
         #region Methods
+
+        public IAutoManagedMemory Reserve(int size) {
+            if (!TryReserve(size, out var reserved))
+                throw new InvalidOperationException("Can't reserve memory");
+
+            return reserved;
+        }
 
         public virtual bool TryReserve(int size, out IAutoManagedMemory reserved) {
             reserved = null;
@@ -121,7 +129,9 @@ namespace AsgardFramework.Memory
         #region Fields
 
         internal readonly int Size;
+
         internal readonly int StartAddress;
+
         internal bool Reserved;
 
         #endregion Fields

@@ -1,4 +1,7 @@
-﻿namespace AsgardFramework.Memory
+﻿using System;
+using System.Collections.Generic;
+
+namespace AsgardFramework.Memory
 {
     public interface IAutoManagedMemory : IMemory
     {
@@ -13,8 +16,17 @@
         #region Properties
 
         int Size { get; }
+
         int Start { get; }
 
         #endregion Properties
+
+        #region Indexers
+
+        IEnumerable<byte> this[Range range] { get; set; }
+
+        byte this[Index index] { get; set; }
+
+        #endregion Indexers
     }
 }

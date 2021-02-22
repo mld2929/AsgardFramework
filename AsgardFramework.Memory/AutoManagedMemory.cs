@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace AsgardFramework.Memory
@@ -28,6 +30,31 @@ namespace AsgardFramework.Memory
 
         #endregion Properties
 
+        #region Indexers
+
+        public IEnumerable<byte> this[Range range] {
+            get {
+                var (offset, count) = convertRange(range);
+
+                return Read(offset, count);
+            }
+            set {
+                var (offset, count) = convertRange(range);
+
+                if (count != value.Count())
+                    throw new ArgumentOutOfRangeException();
+
+                Write(offset, value.ToArray());
+            }
+        }
+
+        public byte this[Index index] {
+            get => Read(index.IsFromEnd ? Size - index.Value : index.Value);
+            set => Write(index.IsFromEnd ? Size - index.Value : index.Value, value);
+        }
+
+        #endregion Indexers
+
         #region Methods
 
         /// <summary>
@@ -46,6 +73,16 @@ namespace AsgardFramework.Memory
 
         protected override bool ReleaseHandle() {
             return Kernel.VirtualFreeEx(m_processHandle, handle);
+        }
+
+        private (int, int) convertRange(Range range) {
+            if (range.Equals(Range.All))
+                return (0, Size);
+
+            var start = range.Start.IsFromEnd ? Size - range.Start.Value : range.Start.Value;
+            var end = range.End.IsFromEnd ? Size - range.End.Value : range.End.Value;
+
+            return (Math.Min(start, end), Math.Abs(start - end));
         }
 
         #endregion Methods

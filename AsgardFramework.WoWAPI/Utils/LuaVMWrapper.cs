@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 using AsgardFramework.CodeInject;
 using AsgardFramework.FasmManaged;
-using AsgardFramework.WoWAPI.Implementation;
+using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Utils
 {
@@ -20,7 +19,10 @@ namespace AsgardFramework.WoWAPI.Utils
         #region Fields
 
         private readonly List<string> m_script = new List<string>();
-        private int m_columnState;
+
+        private int m_bufferOffset;
+
+        private int m_columnState = 1;
 
         #endregion Fields
 
@@ -43,11 +45,11 @@ namespace AsgardFramework.WoWAPI.Utils
             m_script.Add(setTop.CallViaEax());
             m_script.Add("add esp, 12");
             var bytes = assembler.Assemble(m_script);
-            m_columnState = 0;
+            m_columnState = 1;
             m_script.Clear();
             saveLuaStateOnStack();
 
-            return new CompiledCodeBlock(bytes.ToArray());
+            return bytes.ToCodeBlock();
         }
 
         internal LuaVMWrapper PopInteger() {
@@ -62,6 +64,24 @@ namespace AsgardFramework.WoWAPI.Utils
             return this;
         }
 
+        internal LuaVMWrapper PopInteger(int pBuffer) {
+            return PopInteger()
+                .SaveValueTo(pBuffer);
+        }
+
+        internal LuaVMWrapper PopInteger(IAutoManagedMemory buffer) {
+            return PopInteger(buffer + m_bufferOffset);
+        }
+
+        internal LuaVMWrapper PopNumber(int pBuffer) {
+            return PopNumber()
+                .SaveNumberTo(pBuffer);
+        }
+
+        internal LuaVMWrapper PopNumber(IAutoManagedMemory buffer) {
+            return PopNumber(buffer + m_bufferOffset);
+        }
+
         internal LuaVMWrapper PopStringPtr() {
             const int popString = 0x0084E0E0;
             moveStateToEax();
@@ -72,6 +92,15 @@ namespace AsgardFramework.WoWAPI.Utils
             m_columnState++;
 
             return this;
+        }
+
+        internal LuaVMWrapper PopStringPtr(int pBuffer) {
+            return PopStringPtr()
+                .SaveValueTo(pBuffer);
+        }
+
+        internal LuaVMWrapper PopStringStr(IAutoManagedMemory buffer) {
+            return PopStringPtr(buffer + m_bufferOffset);
         }
 
         internal LuaVMWrapper PushInt(int value) {
@@ -100,6 +129,7 @@ namespace AsgardFramework.WoWAPI.Utils
 
         internal LuaVMWrapper SaveValueTo(int pBuffer) {
             m_script.Add($"mov dword [{pBuffer}], eax");
+            m_bufferOffset += 4;
 
             return this;
         }
@@ -108,10 +138,30 @@ namespace AsgardFramework.WoWAPI.Utils
             m_script.Add("mov eax, [esp]");
         }
 
+        private LuaVMWrapper PopNumber() {
+            const int popNumber = 0x0084E030;
+            moveStateToEax();
+            m_script.Add($"push {m_columnState}");
+            m_script.Add("push eax");
+            m_script.Add(popNumber.CallViaEax());
+            m_script.Add("add esp, 8");
+            m_columnState++;
+
+            return this;
+        }
+
         private void saveLuaStateOnStack() {
             const int getState = 0x00817DB0;
             m_script.Add(getState.CallViaEax());
             m_script.Add("push eax");
+        }
+
+        private LuaVMWrapper SaveNumberTo(int pBuffer) {
+            m_script.Add($"mov eax, {pBuffer}");
+            m_script.Add("fstp qword [eax]");
+            m_bufferOffset += 8;
+
+            return this;
         }
 
         #endregion Methods

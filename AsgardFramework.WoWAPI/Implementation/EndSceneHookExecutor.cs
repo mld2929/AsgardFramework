@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +7,7 @@ using AsgardFramework.CodeInject;
 using AsgardFramework.DirectXObserver;
 using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
+using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -15,32 +15,41 @@ namespace AsgardFramework.WoWAPI.Implementation
     {
         #region Constructors
 
-        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler compiler) : base(IntPtr.Zero, true) {
+        internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler assembler) : base(IntPtr.Zero, true) {
             handle = (IntPtr)observer.EndScene;
 
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;
-            m_compiler = compiler;
+            m_assembler = assembler;
             m_hookSpace = memory.Allocate(c_hookSpaceSize);
+            m_permanentActions = new PermanentActions(memory.AllocateAutoScalingShared(c_hookSpaceSize), m_injector, m_assembler);
 
             var hook = new[] {
                 "pushad",
                 "pushfd",
                 $"cmp dword [{m_hookSpace + c_flagOffset}], 0",
-                "je @out",
+                "je @toPermanent",
                 (m_hookSpace.Start + c_executionOffset).CallViaEax(),
                 $"mov dword [{m_hookSpace + c_resultOffset}], eax",
                 $"mov dword [{m_hookSpace + c_flagOffset}], 0",
-                "@out:",
+                "@toPermanent:",
+                $"cmp dword [{m_hookSpace + c_permanentActionsLockNotNeeded}], 0",
+                "je @lockSet",
+                $"mov dword [{m_hookSpace + c_permanentActionsLockSet}], 0",
+                m_permanentActions.ActionsStartAddress.CallViaEax(),
+                "jmp @exit",
+                "@lockSet:",
+                $"mov dword [{m_hookSpace + c_permanentActionsLockSet}], 1",
+                "@exit:",
                 "popfd",
                 "popad",
                 $"mov eax, {m_observer.EndScene}",
                 "jmp eax"
             };
 
-            var compiledHook = new CompiledCodeBlock(compiler.Assemble(hook)
-                                                             .ToArray());
+            var compiledHook = assembler.Assemble(hook)
+                                        .ToCodeBlock();
 
             m_injector.InjectWithoutRet(m_hookSpace, compiledHook, 0);
             m_memory.Write(m_observer.pEndScene, m_hookSpace.Start);
@@ -57,14 +66,31 @@ namespace AsgardFramework.WoWAPI.Implementation
         #region Fields
 
         private const int c_executionOffset = 1024;
+
         private const int c_flagOffset = c_executionOffset - 4;
+
         private const int c_hookSpaceSize = 8096;
+
+        private const int c_permanentActionsLockNotNeeded = c_resultOffset - 4;
+
+        private const int c_permanentActionsLockSet = c_permanentActionsLockNotNeeded - 4;
+
         private const int c_resultOffset = c_flagOffset - 4;
-        private readonly IFasmAssembler m_compiler;
+
+        private readonly IFasmAssembler m_assembler;
+
         private readonly IAutoManagedMemory m_hookSpace;
+
         private readonly ICodeInjector m_injector;
+
         private readonly IGlobalMemory m_memory;
+
         private readonly IIDirect3DDevice9Observer m_observer;
+
+        private readonly PermanentActions m_permanentActions;
+
+        private readonly SemaphoreSlim m_permanentActionsSemaphore = new SemaphoreSlim(1, 1);
+
         private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
 
         #endregion Fields
@@ -77,7 +103,14 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public override bool IsInvalid => m_memory.Read<int>(m_observer.pEndScene) == m_observer.EndScene;
+
         public int Result => m_memory.Read<int>(m_pResult);
+
+        private bool m_permanentActionsLocked {
+            set => m_memory.Write(m_hookSpace + c_permanentActionsLockNotNeeded, value ? 0 : 1);
+            get => m_memory.Read<int>(m_hookSpace + c_permanentActionsLockSet) != 0;
+        }
+
         private int m_pFlag => m_hookSpace + c_flagOffset;
         private int m_pResult => m_hookSpace + c_resultOffset;
 
@@ -113,6 +146,21 @@ namespace AsgardFramework.WoWAPI.Implementation
             return result;
         }
 
+        public async Task StartExecutePermanentlyAsync(ICodeBlock code) {
+            await m_permanentActionsSemaphore.WaitAsync()
+                                             .ConfigureAwait(false);
+
+            m_permanentActionsLocked = true;
+
+            while (!m_permanentActionsLocked)
+                await Task.Delay(1)
+                          .ConfigureAwait(false);
+
+            m_permanentActions.Add(code);
+            m_permanentActionsLocked = false;
+            m_permanentActionsSemaphore.Release();
+        }
+
         protected override bool ReleaseHandle() {
             m_memory.Write(m_observer.pEndScene, m_observer.EndScene);
 
@@ -120,13 +168,8 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         private ICodeBlock jumpToExtraSpace(IAutoManagedMemory space) {
-            var asm = new[] {
-                space.Start.CallViaEax(),
-                "ret"
-            };
-
-            return new CompiledCodeBlock(m_compiler.Assemble(asm)
-                                                   .ToArray());
+            return m_assembler.Assemble(space.Start.CallViaEax())
+                              .ToCodeBlock();
         }
 
         #endregion Methods

@@ -7,6 +7,10 @@ namespace AsgardFramework.WoWAPI.Implementation
     {
         #region Methods
 
+        public Task StartExecuteScriptAtEachFrameAsync(string luaScript) {
+            throw new NotImplementedException();
+        }
+
         public Task SwitchAntiAFKAsync(bool enabled) {
             throw new NotImplementedException();
         }

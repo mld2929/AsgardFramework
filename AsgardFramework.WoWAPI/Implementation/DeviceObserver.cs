@@ -18,8 +18,10 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Fields
 
-        private const int c_dxDevice = 0xC5DF88;  // ?
+        private const int c_dxDevice = 0xC5DF88; // ?
+
         private const int c_dxDeviceIdx = 0x397C; // **IDirect3DDevice9
+
         private const int c_endSceneIdx = 0xA8;
 
         #endregion Fields
