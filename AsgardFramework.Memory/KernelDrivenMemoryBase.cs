@@ -230,19 +230,6 @@ namespace AsgardFramework.Memory
             return str;
         }
 
-        public T ReadSizePrefixed<T>(int offset) where T : SizePrefixed {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(KernelDrivenMemoryBase));
-
-            var size = Read<int>(offset);
-
-            unsafe {
-                fixed (byte* buffer = Read(offset, size)) {
-                    return Marshal.PtrToStructure<T>((IntPtr)buffer);
-                }
-            }
-        }
-
         public void Write(int offset, byte value) {
             Write(offset, new[] {
                 value

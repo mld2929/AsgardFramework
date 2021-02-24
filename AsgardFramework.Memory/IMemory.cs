@@ -27,8 +27,6 @@ namespace AsgardFramework.Memory
 
         string ReadNullTerminatedString(int offset, Encoding encoding);
 
-        T ReadSizePrefixed<T>(int offset) where T : SizePrefixed;
-
         void Write(int offset, byte value);
 
         void Write(int offset, byte[] data);

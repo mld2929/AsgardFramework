@@ -23,7 +23,6 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private readonly IFasmAssembler m_assembler;
 
-        
         private readonly IAutoManagedSharedBuffer m_buffer;
 
         private readonly ICodeExecutor m_executor;

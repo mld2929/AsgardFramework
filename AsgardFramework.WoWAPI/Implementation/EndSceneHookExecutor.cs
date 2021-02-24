@@ -17,7 +17,6 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         internal EndSceneHookExecutor(ICodeInjector injector, IGlobalMemory memory, IIDirect3DDevice9Observer observer, IFasmAssembler assembler) : base(IntPtr.Zero, true) {
             handle = (IntPtr)observer.EndScene;
-
             m_injector = injector;
             m_memory = memory;
             m_observer = observer;

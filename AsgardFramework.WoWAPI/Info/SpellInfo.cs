@@ -71,15 +71,6 @@ namespace AsgardFramework.WoWAPI.Info
     {
         #region Constructors
 
-        // I wasted about 6 hours to create size-prefixed structure, size-prefixed utf8 string inside that structure,
-        // asm code for copy strings and fill sizes, configure LuaVMWrapper, custom marshaler, etc.
-        // and after all I noticed (by exception) that custom marshalers can't be appended to fields, fuck.
-        // Maybe I'll try again, e.g. I can create structure with string inside it, and append another
-        // marshaler to that structure.
-        // But fuck that shit I just want to have only C# string inside API classes without any custom types and
-        // mapping code which must be written for each provided type.
-        // I fucking hate myself and microsoft. ლ(ಠ益ಠლ)
-        // C++ wait for me
         internal SpellInfo(SpellInfoRaw raw, IGlobalMemory memory) {
             Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
             RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);

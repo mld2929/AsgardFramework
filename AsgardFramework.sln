@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsgardFramework.WoWAPI", "A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsgardFramework.UnitTests", "AsgardFramework.UnitTests\AsgardFramework.UnitTests.csproj", "{3B8A238A-59BE-44EF-A682-951A9D835F3B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsgardFramework.DllWrapper", "AsgardFramework.DllWrapper\AsgardFramework.DllWrapper.csproj", "{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,14 @@ Global
 		{3B8A238A-59BE-44EF-A682-951A9D835F3B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3B8A238A-59BE-44EF-A682-951A9D835F3B}.Release|x86.ActiveCfg = Release|Any CPU
 		{3B8A238A-59BE-44EF-A682-951A9D835F3B}.Release|x86.Build.0 = Release|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Debug|x86.Build.0 = Debug|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Release|x86.ActiveCfg = Release|x86
+		{1577A8A7-7C2E-4614-8FFE-1BA391F2441C}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
