@@ -1,10 +1,44 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
+
+using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Info
 {
-    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 44)]
+    public enum AuraType
+    {
+        None,
+        Curse,
+        Disease,
+        Magic,
+        Poison
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal readonly struct UnitAuraInfoRaw
+    {
+        public readonly int Name;
+        public readonly int RankOrSecondaryText;
+        public readonly int Icon;
+        public readonly int Count;
+        public readonly int Type;
+        public readonly double Duration;
+        public readonly double ExpiresAt;
+        public readonly int CasterUnitMetaId;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public readonly bool Stealable;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public readonly bool ConsolidatedAtUI;
+
+        public readonly int SpellId;
+    }
+
     public class UnitAuraInfo
     {
+        #region Fields
+
         /// <summary>
         ///     Unit which applied the aura. <see cref="string.Empty" /> if the casting unit (or its controller) has no unitID
         /// </summary>
@@ -12,90 +46,85 @@ namespace AsgardFramework.WoWAPI.Info
         ///     If the aura was applied by a unit that does not have a token but is controlled by one that does (e.g. a totem or
         ///     another player's vehicle), value is the controlling unit meta id.
         /// </remarks>
-        [FieldOffset(28)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string CasterUnitMetaId;
 
         /// <summary>
         ///     <see langword="true" /> if the aura is eligible for the 'consolidated' aura display in the default UI.
         /// </summary>
-        [FieldOffset(36)]
-        [MarshalAs(UnmanagedType.U4)]
         public readonly bool ConsolidatedAtUI;
 
         /// <summary>
         ///     The number of times the aura has been applied
         /// </summary>
-        [FieldOffset(12)]
         public readonly int Count;
 
         /// <summary>
         ///     Total duration of the aura (in seconds)
         /// </summary>
-        [FieldOffset(20)]
-        public readonly int Duration;
+        public readonly double Duration;
 
         /// <summary>
         ///     Time at which the aura will expire
         /// </summary>
-        [FieldOffset(24)]
-        public readonly float ExpiresAt;
+        public readonly double ExpiresAt;
 
         /// <summary>
         ///     Path to an icon texture for the aura
         /// </summary>
-        [FieldOffset(8)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string Icon;
 
         /// <summary>
         ///     Name of the aura
         /// </summary>
-        [FieldOffset(0)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string Name;
 
         /// <summary>
         ///     Secondary text for the aura (often a rank; e.g. <c>"Rank 7"</c>)
         /// </summary>
-        [FieldOffset(4)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string RankOrSecondaryText;
 
         /// <summary>
         ///     Spell ID of the aura
         /// </summary>
-        [FieldOffset(40)]
         public readonly int SpellId;
 
         /// <summary>
         ///     <see langword="true" /> if the aura can be transferred to a player using the Spellsteal spell; otherwise
         ///     <see langword="false" />
         /// </summary>
-        [FieldOffset(32)]
-        [MarshalAs(UnmanagedType.U4)]
         public readonly bool Stealable;
 
         /// <summary>
-        ///     Type of aura (relevant for dispelling and certain other mechanics); <see cref="string.Empty" /> if not one of the
-        ///     following values:
-        ///     <list type="table">
-        ///         <item>
-        ///             <b>Curse</b>
-        ///         </item>
-        ///         <item>
-        ///             <b>Disease</b>
-        ///         </item>
-        ///         <item>
-        ///             <b>Magic</b>
-        ///         </item>
-        ///         <item>
-        ///             <b>Poison</b>
-        ///         </item>
-        ///     </list>
+        ///     Type of aura (relevant for dispelling and certain other mechanics)
         /// </summary>
-        [FieldOffset(16)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
-        public readonly string Type;
+        public readonly AuraType Type;
+
+        #endregion Fields
+
+        #region Constructors
+
+        internal UnitAuraInfo(UnitAuraInfoRaw raw, IGlobalMemory memory) {
+            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
+            RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);
+            Icon = memory.ReadNullTerminatedString(raw.Icon, Encoding.UTF8);
+            Count = raw.Count;
+
+            Type = memory.ReadNullTerminatedString(raw.Type, Encoding.UTF8) switch {
+                "Curse" => AuraType.Curse,
+                "Disease" => AuraType.Disease,
+                "Magic" => AuraType.Magic,
+                "Poison" => AuraType.Poison,
+                _ => AuraType.None
+            };
+
+            Duration = raw.Duration;
+            ExpiresAt = raw.ExpiresAt;
+            CasterUnitMetaId = memory.ReadNullTerminatedString(raw.CasterUnitMetaId, Encoding.UTF8);
+            Stealable = raw.Stealable;
+            ConsolidatedAtUI = raw.ConsolidatedAtUI;
+            SpellId = raw.SpellId;
+        }
+
+        #endregion Constructors
     }
 }

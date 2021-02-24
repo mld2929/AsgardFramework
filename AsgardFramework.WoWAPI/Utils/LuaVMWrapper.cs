@@ -99,7 +99,7 @@ namespace AsgardFramework.WoWAPI.Utils
                 .SaveValueTo(pBuffer);
         }
 
-        internal LuaVMWrapper PopStringStr(IAutoManagedMemory buffer) {
+        internal LuaVMWrapper PopStringPtr(IAutoManagedMemory buffer) {
             return PopStringPtr(buffer + m_bufferOffset);
         }
 
@@ -125,6 +125,10 @@ namespace AsgardFramework.WoWAPI.Utils
             m_columnState++;
 
             return this;
+        }
+
+        internal LuaVMWrapper PushStringPtr(IAutoManagedMemory buffer) {
+            return PushStringPtr(buffer.Start);
         }
 
         internal LuaVMWrapper SaveValueTo(int pBuffer) {

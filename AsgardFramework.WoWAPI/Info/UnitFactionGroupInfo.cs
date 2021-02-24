@@ -1,22 +1,40 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
+
+using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Info
 {
-    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    internal readonly struct UnitFactionGroupInfoRaw
+    {
+        public readonly int Name;
+        public readonly int LocalizedName;
+    }
+
     public class UnitFactionGroupInfo
     {
+        #region Fields
+
         /// <summary>
         ///     Localized name of the faction
         /// </summary>
-        [FieldOffset(4)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string LocalizedName;
 
         /// <summary>
         ///     Non-localized (English) faction name of the faction (<c>"Horde"</c> or <c>"Alliance"</c>)
         /// </summary>
-        [FieldOffset(0)]
-        [MarshalAs(UnmanagedType.LPUTF8Str)]
         public readonly string Name;
+
+        #endregion Fields
+
+        #region Constructors
+
+        internal UnitFactionGroupInfo(UnitFactionGroupInfoRaw raw, IGlobalMemory memory) {
+            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
+            LocalizedName = memory.ReadNullTerminatedString(raw.LocalizedName, Encoding.UTF8);
+        }
+
+        #endregion Constructors
     }
 }
