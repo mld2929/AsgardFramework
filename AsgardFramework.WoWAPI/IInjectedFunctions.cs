@@ -8,7 +8,7 @@ namespace AsgardFramework.WoWAPI
 
         Task StartExecuteScriptAtEachFrameAsync(string luaScript);
 
-        Task SwitchAntiAFKAsync(bool enabled);
+        bool AntiAFK { set; }
 
         #endregion Methods
     }

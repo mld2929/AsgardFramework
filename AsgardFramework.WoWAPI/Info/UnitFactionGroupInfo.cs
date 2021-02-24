@@ -14,6 +14,15 @@ namespace AsgardFramework.WoWAPI.Info
 
     public class UnitFactionGroupInfo
     {
+        #region Constructors
+
+        internal UnitFactionGroupInfo(UnitFactionGroupInfoRaw raw, IGlobalMemory memory) {
+            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
+            LocalizedName = memory.ReadNullTerminatedString(raw.LocalizedName, Encoding.UTF8);
+        }
+
+        #endregion Constructors
+
         #region Fields
 
         /// <summary>
@@ -27,14 +36,5 @@ namespace AsgardFramework.WoWAPI.Info
         public readonly string Name;
 
         #endregion Fields
-
-        #region Constructors
-
-        internal UnitFactionGroupInfo(UnitFactionGroupInfoRaw raw, IGlobalMemory memory) {
-            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
-            LocalizedName = memory.ReadNullTerminatedString(raw.LocalizedName, Encoding.UTF8);
-        }
-
-        #endregion Constructors
     }
 }

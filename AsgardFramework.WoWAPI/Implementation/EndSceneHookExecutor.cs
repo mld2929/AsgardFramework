@@ -37,9 +37,14 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "je @lockSet",
                 $"mov dword [{m_hookSpace + c_permanentActionsLockSet}], 0",
                 m_permanentActions.ActionsStartAddress.CallViaEax(),
-                "jmp @exit",
+                "jmp @toAntiAfk",
                 "@lockSet:",
                 $"mov dword [{m_hookSpace + c_permanentActionsLockSet}], 1",
+                "@toAntiAfk:",
+                $"cmp dword [{m_hookSpace + c_antiAfkEnabled}], 0",
+                "je @exit",
+                $"mov eax, [{c_timestamp}]",
+                $"mov dword [{c_lastHardwareAction}], eax",
                 "@exit:",
                 "popfd",
                 "popad",
@@ -64,6 +69,10 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Fields
 
+        private const int c_timestamp = 0x00B1D618;
+
+        private const int c_lastHardwareAction = 0x00B499A4;
+
         private const int c_executionOffset = 1024;
 
         private const int c_flagOffset = c_executionOffset - 4;
@@ -73,6 +82,8 @@ namespace AsgardFramework.WoWAPI.Implementation
         private const int c_permanentActionsLockNotNeeded = c_resultOffset - 4;
 
         private const int c_permanentActionsLockSet = c_permanentActionsLockNotNeeded - 4;
+
+        private const int c_antiAfkEnabled = c_permanentActionsLockSet - 4;
 
         private const int c_resultOffset = c_flagOffset - 4;
 
@@ -96,7 +107,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Properties
 
-        public bool ExecutionFlag {
+        private bool m_executionFlag {
             get => m_memory.Read<int>(m_pFlag) != 0;
             set => m_memory.Write(m_pFlag, value ? 1 : 0);
         }
@@ -112,6 +123,10 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private int m_pFlag => m_hookSpace + c_flagOffset;
         private int m_pResult => m_hookSpace + c_resultOffset;
+
+        public bool AntiAFK {
+            set => m_memory.Write(m_hookSpace + c_antiAfkEnabled, value ? 1 : 0);
+        }
 
         #endregion Properties
 
@@ -133,9 +148,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                              .ConfigureAwait(false);
 
             m_injector.Inject(m_hookSpace, injection, c_executionOffset);
-            ExecutionFlag = true;
+            m_executionFlag = true;
 
-            while (ExecutionFlag)
+            while (m_executionFlag)
                 await Task.Delay(1)
                           .ConfigureAwait(false);
 

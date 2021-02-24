@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.Memory;
@@ -14,7 +13,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public Task AttackTargetAsync() {
             const int attackTarget = 0x0051A650;
-            return m_executor.ExecuteAsync(new LuaVMWrapper().CallLuaFunction(attackTarget).CompileScript(m_assembler));
+
+            return m_executor.ExecuteAsync(new LuaVMWrapper().CallLuaFunction(attackTarget)
+                                                             .CompileScript(m_assembler));
         }
 
         public Task DismountAsync() {
@@ -32,6 +33,7 @@ namespace AsgardFramework.WoWAPI.Implementation
                                                             .CallLuaFunction(equipItem)
                                                             .CompileScript(m_assembler))
                             .ConfigureAwait(false);
+
             pName.Dispose();
         }
 
@@ -169,6 +171,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var pMeta = stringToPtr(unitMetaId);
             var pFilter = filter != null ? stringToPtr(filter) : null;
             var unitAuraInfo = m_buffer.Reserve(unitAuraInfoSize);
+
             var script = new LuaVMWrapper().PushStringPtr(pMeta)
                                            .PushInt(index);
 
@@ -206,10 +209,13 @@ namespace AsgardFramework.WoWAPI.Implementation
             var pAuraName = stringToPtr(auraName);
             var pSecondary = auraSecondaryText != null ? stringToPtr(auraSecondaryText) : null;
             var unitAuraInfo = m_buffer.Reserve(unitAuraInfoSize);
+
             var script = new LuaVMWrapper().PushStringPtr(pMeta)
                                            .PushStringPtr(pAuraName);
+
             if (auraSecondaryText != null)
                 script = script.PushStringPtr(pSecondary);
+
             if (filter != null)
                 script = script.PushStringPtr(pFilter);
 
@@ -298,6 +304,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public Task<bool> IsOutdoorsAsync() {
             const int isOutdoors = 0x00612360;
+
             return runAndGetBool(isOutdoors);
         }
 
@@ -321,6 +328,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var result = buffer.Read<int>(0);
             pMeta.Dispose();
             buffer.Dispose();
+
             return result != 0;
         }
 
@@ -343,7 +351,7 @@ namespace AsgardFramework.WoWAPI.Implementation
                                                             .CallLuaFunction(runScript)
                                                             .CompileScript(m_assembler))
                             .ConfigureAwait(false);
-            
+
             pScript.Dispose();
         }
 
@@ -355,7 +363,7 @@ namespace AsgardFramework.WoWAPI.Implementation
                                                             .CallLuaFunction(followUnit)
                                                             .CompileScript(m_assembler))
                             .ConfigureAwait(false);
-            
+
             pMeta.Dispose();
         }
 
@@ -373,6 +381,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var result = buffer.Read<int>(0);
             pMeta.Dispose();
             buffer.Dispose();
+
             return result != 0;
         }
 
@@ -427,8 +436,8 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         private async Task<bool> runAndGetBool(int luaFunction) {
-            return (await runAndGetInt(luaFunction)
-                        .ConfigureAwait(false)) !=
+            return await runAndGetInt(luaFunction)
+                       .ConfigureAwait(false) !=
                    0;
         }
 

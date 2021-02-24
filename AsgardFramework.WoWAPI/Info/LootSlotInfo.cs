@@ -33,6 +33,18 @@ namespace AsgardFramework.WoWAPI.Info
 
     public class LootSlotInfo
     {
+        #region Constructors
+
+        internal LootSlotInfo(LootSlotInfoRaw raw, IGlobalMemory memory) {
+            Texture = memory.ReadNullTerminatedString(raw.Texture, Encoding.UTF8);
+            NameOrDescription = memory.ReadNullTerminatedString(raw.NameOrDescription, Encoding.UTF8);
+            Quantity = raw.Quantity;
+            Quality = raw.Quality;
+            Locked = raw.Locked;
+        }
+
+        #endregion Constructors
+
         #region Fields
 
         /// <summary>
@@ -62,17 +74,5 @@ namespace AsgardFramework.WoWAPI.Info
         public readonly string Texture;
 
         #endregion Fields
-
-        #region Constructors
-
-        internal LootSlotInfo(LootSlotInfoRaw raw, IGlobalMemory memory) {
-            Texture = memory.ReadNullTerminatedString(raw.Texture, Encoding.UTF8);
-            NameOrDescription = memory.ReadNullTerminatedString(raw.NameOrDescription, Encoding.UTF8);
-            Quantity = raw.Quantity;
-            Quality = raw.Quality;
-            Locked = raw.Locked;
-        }
-
-        #endregion Constructors
     }
 }

@@ -14,6 +14,7 @@ namespace AsgardFramework.WoWAPI.Info
         ///     The length of the cooldown, or 0 if the spell is ready
         /// </summary>
         public readonly double Duration;
+
         /// <summary>
         ///     <see langword="true" /> if a Cooldown UI element should be used to display the cooldown, otherwise
         ///     <see langword="false" />.
@@ -23,6 +24,5 @@ namespace AsgardFramework.WoWAPI.Info
         /// </remarks>
         [MarshalAs(UnmanagedType.Bool)]
         public readonly bool CooldownVisibleAtUI;
-
     }
 }

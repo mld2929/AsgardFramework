@@ -15,6 +15,15 @@ namespace AsgardFramework.WoWAPI.Info
 
     public class ItemSpellInfo
     {
+        #region Constructors
+
+        internal ItemSpellInfo(ItemSpellInfoRaw raw, IGlobalMemory memory) {
+            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
+            RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);
+        }
+
+        #endregion Constructors
+
         #region Fields
 
         /// <summary>
@@ -31,14 +40,5 @@ namespace AsgardFramework.WoWAPI.Info
         public readonly string RankOrSecondaryText;
 
         #endregion Fields
-
-        #region Constructors
-
-        internal ItemSpellInfo(ItemSpellInfoRaw raw, IGlobalMemory memory) {
-            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
-            RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);
-        }
-
-        #endregion Constructors
     }
 }

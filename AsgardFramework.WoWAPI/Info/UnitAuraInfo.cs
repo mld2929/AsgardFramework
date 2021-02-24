@@ -37,6 +37,32 @@ namespace AsgardFramework.WoWAPI.Info
 
     public class UnitAuraInfo
     {
+        #region Constructors
+
+        internal UnitAuraInfo(UnitAuraInfoRaw raw, IGlobalMemory memory) {
+            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
+            RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);
+            Icon = memory.ReadNullTerminatedString(raw.Icon, Encoding.UTF8);
+            Count = raw.Count;
+
+            Type = memory.ReadNullTerminatedString(raw.Type, Encoding.UTF8) switch {
+                "Curse" => AuraType.Curse,
+                "Disease" => AuraType.Disease,
+                "Magic" => AuraType.Magic,
+                "Poison" => AuraType.Poison,
+                _ => AuraType.None
+            };
+
+            Duration = raw.Duration;
+            ExpiresAt = raw.ExpiresAt;
+            CasterUnitMetaId = memory.ReadNullTerminatedString(raw.CasterUnitMetaId, Encoding.UTF8);
+            Stealable = raw.Stealable;
+            ConsolidatedAtUI = raw.ConsolidatedAtUI;
+            SpellId = raw.SpellId;
+        }
+
+        #endregion Constructors
+
         #region Fields
 
         /// <summary>
@@ -100,31 +126,5 @@ namespace AsgardFramework.WoWAPI.Info
         public readonly AuraType Type;
 
         #endregion Fields
-
-        #region Constructors
-
-        internal UnitAuraInfo(UnitAuraInfoRaw raw, IGlobalMemory memory) {
-            Name = memory.ReadNullTerminatedString(raw.Name, Encoding.UTF8);
-            RankOrSecondaryText = memory.ReadNullTerminatedString(raw.RankOrSecondaryText, Encoding.UTF8);
-            Icon = memory.ReadNullTerminatedString(raw.Icon, Encoding.UTF8);
-            Count = raw.Count;
-
-            Type = memory.ReadNullTerminatedString(raw.Type, Encoding.UTF8) switch {
-                "Curse" => AuraType.Curse,
-                "Disease" => AuraType.Disease,
-                "Magic" => AuraType.Magic,
-                "Poison" => AuraType.Poison,
-                _ => AuraType.None
-            };
-
-            Duration = raw.Duration;
-            ExpiresAt = raw.ExpiresAt;
-            CasterUnitMetaId = memory.ReadNullTerminatedString(raw.CasterUnitMetaId, Encoding.UTF8);
-            Stealable = raw.Stealable;
-            ConsolidatedAtUI = raw.ConsolidatedAtUI;
-            SpellId = raw.SpellId;
-        }
-
-        #endregion Constructors
     }
 }
