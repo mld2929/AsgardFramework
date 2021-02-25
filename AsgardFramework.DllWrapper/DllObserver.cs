@@ -19,22 +19,14 @@ namespace AsgardFramework.DllWrapper
             if (snapshot == IntPtr.Zero)
                 throw new InvalidOperationException("Can't create toolhelp snapshot");
 
-            var size = Marshal.SizeOf<MODULEENTRY32W>();
             var p = pModule;
 
-            if (!Kernel.Module32FirstW(snapshot, p)) {
-                Marshal.FreeHGlobal(p);
-                Kernel.CloseHandle(snapshot);
+            var equals = false;
 
-                throw new InvalidOperationException("Can't get first module");
-            }
-
-            bool equals;
-
-            do {
+            while (!equals && Kernel.Module32NextW(snapshot, p)) {
                 m_module = pToM(p);
                 equals = m_module.szModule.Equals(dllName, StringComparison.OrdinalIgnoreCase);
-            } while (!equals && Kernel.Module32NextW(snapshot, p));
+            }
 
             Marshal.FreeHGlobal(p);
             Kernel.CloseHandle(snapshot);

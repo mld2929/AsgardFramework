@@ -41,6 +41,15 @@ namespace AsgardFramework.Memory
         [DllImport("Kernel32.dll")]
         internal static extern bool WriteProcessMemory(SafeHandle hProcess, IntPtr lpBaseAddress, [MarshalAs(UnmanagedType.LPArray)] byte[] lpBuffer, int nSize, out int lpNumberOfBytesWritten);
 
+        [DllImport("Kernel32.dll")]
+        internal static extern IntPtr CreateRemoteThread(SafeHandle hProcess,
+                                                         int lpThreadAttributes,
+                                                         int dwStackSize,
+                                                         int lpStartAddress,
+                                                         int lpParameter,
+                                                         int dwCreationFlags,
+                                                         out int lpThreadId);
+
         #endregion Methods
     }
 }

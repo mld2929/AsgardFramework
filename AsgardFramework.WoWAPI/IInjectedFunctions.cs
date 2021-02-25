@@ -10,6 +10,8 @@ namespace AsgardFramework.WoWAPI
 
         bool AntiAFK { set; }
 
+        void DisableWarden();
+
         #endregion Methods
     }
 }

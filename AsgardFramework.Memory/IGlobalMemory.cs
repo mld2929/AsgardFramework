@@ -10,6 +10,8 @@
 
         IAutoManagedSharedBuffer AllocateShared(int size);
 
+        void LoadDll(string path);
+
         #endregion Methods
     }
 }

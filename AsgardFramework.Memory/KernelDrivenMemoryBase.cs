@@ -76,12 +76,17 @@ namespace AsgardFramework.Memory
             var maxCharSize = encoding.GetMaxByteCount(1);
             var bytes = Read(offset, maxCharSize);
 
-            if (bytes[0] == 0)
+            var terminator = encoding.GetBytes(new[] {
+                '\0'
+            });
+
+            if (bytes.SequenceEqual(terminator))
                 return string.Empty;
 
             var buffer = new List<byte>(bytes);
 
-            while (bytes.All(b => b != 0)) {
+            while (!bytes.Intersect(terminator)
+                         .Any()) {
                 offset += maxCharSize;
                 bytes = Read(offset, maxCharSize);
                 buffer.AddRange(bytes);

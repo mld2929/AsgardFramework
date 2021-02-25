@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,6 +27,10 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public bool AntiAFK {
             set => ((EndSceneHookExecutor)m_executor).AntiAFK = value; // yeah type cast 
+        }
+
+        public void DisableWarden() {
+            m_memory.LoadDll($"{AppDomain.CurrentDomain.BaseDirectory}/AsgardFramework.WardenDefuser.dll");
         }
 
         #endregion Methods

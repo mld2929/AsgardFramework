@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Text;
+
+using AsgardFramework.DllWrapper;
 
 namespace AsgardFramework.Memory
 {
     public sealed class GlobalMemory : KernelDrivenMemoryBase, IGlobalMemory
     {
+        private readonly int m_procId;
+
         #region Constructors
 
-        public GlobalMemory(int processId) : base(Kernel.OpenProcess(Kernel.c_allAccess, true, processId)) { }
+        public GlobalMemory(int processId) : base(Kernel.OpenProcess(Kernel.c_allAccess, true, processId)) {
+            m_procId = processId;
+        }
 
         #endregion Constructors
 
@@ -51,6 +58,16 @@ namespace AsgardFramework.Memory
             addWeakHandlerFor(memory);
 
             return memory;
+        }
+
+        public void LoadDll(string path) {
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(GlobalMemory));
+
+            var loadLibrary = new DllObserver(m_procId, "Kernel32.dll")["LoadLibraryW"];
+            var buffer = Allocate(1024);
+            buffer.WriteNullTerminatedString(0, path, Encoding.Unicode);
+            Kernel.CreateRemoteThread(m_processHandle, 0, 0, loadLibrary, buffer.Start, 0, out _);
         }
 
         protected override bool ReleaseHandle() {
