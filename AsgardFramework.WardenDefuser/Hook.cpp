@@ -5,56 +5,52 @@
 #include "Hook.h"
 
 #include <cstdio>
+#include <vector>
+
+#include "Logger.h"
 
 
 #pragma pack(push, 1)
 
-struct jmp
-{
-	BYTE opcode[2]{0xFF, 0x25};
-	int* to;
-
-	explicit jmp(int* dest) : to(dest)
-	{
-	}
-};
-
-struct call
-{
-	BYTE data[7]{0xBB, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xD3};
-
-	explicit call(const int to)
-	{
-		reinterpret_cast<int&>(data[1]) = to;
-	}
-};
-
-struct origData
-{
-	BYTE data[6]{};
-};
-
 struct origFunc
 {
-	origData data;
-	jmp jumpTo;
-};
-
-struct modified
-{
-	call toHook;
-	call toImpl;
-	jmp toHookend;
-
-	modified(const call& hook, const call& toVA, const jmp& hookend) : toHook(hook), toImpl(toVA), toHookend(hookend)
-	{
-	}
+	BYTE garbage[8]{};
+	int* jumpTo;
 };
 #pragma pack(pop)
 
-static int buffer = 0;
+static int virtualProtectKernelBase = 0;
+const void* wardenLoadRet = reinterpret_cast<const void*>(0x008725E0);
 
-void Hook::hookVirtualAlloc()
+void waterwalk()
+{
+	DWORD old;
+	auto* patch = reinterpret_cast<int*>(0x0075E439);
+	VirtualProtect(patch, sizeof(int), PAGE_EXECUTE_READWRITE, &old);
+	*patch = 0xCF811475;
+}
+
+
+static void __declspec(naked) __cdecl vpHook(const unsigned char* lpAddress, unsigned dwSize, unsigned flNewProtect)
+{
+	static void* from = nullptr;
+	__asm {
+		mov eax, [esp]
+		mov from, eax
+		push ebp
+		mov ebp, esp
+	}
+	printf("Protect 0x%p, called from 0x%p, flNewProtect: [0x%X], size: [0x%X]\n", static_cast<const void*>(lpAddress), from, flNewProtect, dwSize);
+	char buffer[9];
+	_itoa(flNewProtect, buffer, 16);
+	Logger::dump(lpAddress, dwSize, buffer);
+	__asm {
+		pop ebp
+		jmp dword ptr[virtualProtectKernelBase]
+	}
+}
+
+void Hook::hookVirtualProtect()
 {
 	auto* hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 	MODULEENTRY32W me;
@@ -67,46 +63,14 @@ void Hook::hookVirtualAlloc()
 	else
 	{
 		DWORD old;
-		auto* k32_va = reinterpret_cast<origFunc*>(reinterpret_cast<int>(GetProcAddress(me.hModule, "VirtualAlloc")));
-		VirtualProtect(k32_va, sizeof(modified), PAGE_EXECUTE_READWRITE, &old);
-		const auto to = *k32_va->jumpTo.to;
-		printf("Hook will be set at 0x%X\n", reinterpret_cast<int>(k32_va));
-		buffer = reinterpret_cast<int>(hookend);
-		*reinterpret_cast<modified*>(k32_va) = modified(call(reinterpret_cast<int>(hook)), call(to), jmp(&buffer));
+		auto* k32_vp = reinterpret_cast<origFunc*>(GetProcAddress(me.hModule, "VirtualProtect"));
+		VirtualProtect(k32_vp->jumpTo, sizeof(int), PAGE_EXECUTE_READWRITE, &old);
+		virtualProtectKernelBase = *k32_vp->jumpTo;
+		*k32_vp->jumpTo = reinterpret_cast<int>(vpHook);
 	}
 	CloseHandle(hSnapshot);
 }
 
-void Hook::resetHookVirtualAlloc()
+void Hook::resetHookVirtualProtect()
 {
-}
-
-
-void __cdecl Hook::hook(void* from, void* lpAddress, int size, int allocType, int protection)
-{
-	printf("Requested allocation at 0x%p, size 0x%X, called from 0x%p\n flAllocationType: [0x%X], flProtect: [0x%X]\n",
-	       lpAddress, size, from, allocType, protection);
-	// stack patch
-	__asm{
-		mov edx, esp
-		mov esp, ebp
-		add esp, 8
-		mov ecx, 16
-		l_loop:
-		mov eax, [esp + ecx]
-		xchg[esp], eax
-		mov [esp + ecx], eax
-		sub ecx, 4
-		cmp ecx, 0
-		jne l_loop
-		mov esp, edx
-		}
-}
-
-int __cdecl Hook::hookend()
-{
-	int addr;
-	__asm mov addr, eax
-	printf("Allocated at 0x%X\n", addr);
-	return addr;
 }
