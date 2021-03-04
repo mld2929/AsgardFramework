@@ -39,15 +39,16 @@ static void __declspec(naked) __cdecl vpHook(const unsigned char* lpAddress, uns
 		mov from, eax
 		push ebp
 		mov ebp, esp
-	}
-	printf("Protect 0x%p, called from 0x%p, flNewProtect: [0x%X], size: [0x%X]\n", static_cast<const void*>(lpAddress), from, flNewProtect, dwSize);
+		}
+	printf("Protect 0x%p, called from 0x%p, flNewProtect: [0x%X], size: [0x%X]\n", static_cast<const void*>(lpAddress),
+	       from, flNewProtect, dwSize);
 	char buffer[9];
 	_itoa(flNewProtect, buffer, 16);
 	Logger::dump(lpAddress, dwSize, buffer);
 	__asm {
 		pop ebp
 		jmp dword ptr[virtualProtectKernelBase]
-	}
+		}
 }
 
 void Hook::hookVirtualProtect()
@@ -57,7 +58,9 @@ void Hook::hookVirtualProtect()
 	ZeroMemory(&me, sizeof(me));
 	me.dwSize = sizeof(me);
 	auto eq = false;
-	while (Module32NextW(hSnapshot, &me) && !(eq = _wcsicmp(L"kernel32.dll", me.szModule) == 0)) {}
+	while (Module32NextW(hSnapshot, &me) && !(eq = _wcsicmp(L"kernel32.dll", me.szModule) == 0))
+	{
+	}
 	if (!eq)
 		printf("Kernel32.dll not found\n");
 	else

@@ -69,24 +69,15 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Fields
 
-        private const int c_timestamp = 0x00B1D618;
-
-        private const int c_lastHardwareAction = 0x00B499A4;
-
-        private const int c_executionOffset = 1024;
-
-        private const int c_flagOffset = c_executionOffset - 4;
-
-        private const int c_hookSpaceSize = 8096;
-
-        private const int c_permanentActionsLockNotNeeded = c_resultOffset - 4;
-
-        private const int c_permanentActionsLockSet = c_permanentActionsLockNotNeeded - 4;
-
         private const int c_antiAfkEnabled = c_permanentActionsLockSet - 4;
-
+        private const int c_executionOffset = 1024;
+        private const int c_flagOffset = c_executionOffset - 4;
+        private const int c_hookSpaceSize = 8096;
+        private const int c_lastHardwareAction = 0x00B499A4;
+        private const int c_permanentActionsLockNotNeeded = c_resultOffset - 4;
+        private const int c_permanentActionsLockSet = c_permanentActionsLockNotNeeded - 4;
         private const int c_resultOffset = c_flagOffset - 4;
-
+        private const int c_timestamp = 0x00B1D618;
         private readonly IFasmAssembler m_assembler;
 
         private readonly IAutoManagedMemory m_hookSpace;
@@ -107,14 +98,18 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Properties
 
-        private bool m_executionFlag {
-            get => m_memory.Read<int>(m_pFlag) != 0;
-            set => m_memory.Write(m_pFlag, value ? 1 : 0);
+        public bool AntiAFK {
+            set => m_memory.Write(m_hookSpace + c_antiAfkEnabled, value ? 1 : 0);
         }
 
         public override bool IsInvalid => m_memory.Read<int>(m_observer.pEndScene) == m_observer.EndScene;
 
         public int Result => m_memory.Read<int>(m_pResult);
+
+        private bool m_executionFlag {
+            get => m_memory.Read<int>(m_pFlag) != 0;
+            set => m_memory.Write(m_pFlag, value ? 1 : 0);
+        }
 
         private bool m_permanentActionsLocked {
             set => m_memory.Write(m_hookSpace + c_permanentActionsLockNotNeeded, value ? 0 : 1);
@@ -123,10 +118,6 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private int m_pFlag => m_hookSpace + c_flagOffset;
         private int m_pResult => m_hookSpace + c_resultOffset;
-
-        public bool AntiAFK {
-            set => m_memory.Write(m_hookSpace + c_antiAfkEnabled, value ? 1 : 0);
-        }
 
         #endregion Properties
 

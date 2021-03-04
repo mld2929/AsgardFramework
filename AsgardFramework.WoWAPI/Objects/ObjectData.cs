@@ -22,6 +22,7 @@
         #region Properties
 
         public Common Common { get; }
+        public string Name { get; internal set; }
         public Object Object { get; internal set; }
         public Position Position { get; internal set; }
 

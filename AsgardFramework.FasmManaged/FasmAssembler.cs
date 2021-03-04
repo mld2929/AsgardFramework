@@ -8,19 +8,6 @@ namespace AsgardFramework.FasmManaged
 {
     public class FasmAssembler : IFasmAssembler
     {
-        #region Constructors
-
-        /// <summary>
-        ///     Requires <c>FASM.DLL</c> in FasmManaged start directory
-        /// </summary>
-        /// <exception cref="FileNotFoundException" />
-        public FasmAssembler() {
-            if (!File.Exists(c_dllName))
-                throw new FileNotFoundException(c_dllName);
-        }
-
-        #endregion Constructors
-
         #region Properties
 
         public string FasmDLLVersion {

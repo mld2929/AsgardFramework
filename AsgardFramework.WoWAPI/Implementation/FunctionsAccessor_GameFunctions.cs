@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.WoWAPI.Objects;
@@ -43,8 +44,19 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
-        public Task<string> GetNameAsync(int objBase) {
-            throw new NotImplementedException();
+        public async Task<string> GetNameAsync(int objBase) {
+            const int getNameOffset = 54 * 4;
+            var getName = m_memory.Read<int>(m_memory.Read<int>(objBase) + getNameOffset);
+
+            var asm = new[] {
+                $"mov ecx, {objBase}", // this
+                $"mov eax, {getName}",
+                "call eax"
+            };
+
+            return m_memory.ReadNullTerminatedString(await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+                                                                                              .ToCodeBlock())
+                                                                     .ConfigureAwait(false), Encoding.UTF8);
         }
 
         public Task<string> GetPlayerNameAsync() {
@@ -56,8 +68,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             const int size = sizeof(float) * 4;
             var getPosition = m_memory.Read<int>(m_memory.Read<int>(objBase) + getPositionOffset);
 
-            if (!m_buffer.TryReserve(size, out var buffer))
-                throw new InvalidOperationException("Can't reserve memory");
+            var buffer = m_buffer.Reserve(size);
 
             var asm = new[] {
                 $"mov ecx, {objBase}", // this

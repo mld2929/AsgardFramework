@@ -6,11 +6,11 @@ namespace AsgardFramework.WoWAPI
     {
         #region Methods
 
-        Task StartExecuteScriptAtEachFrameAsync(string luaScript);
-
         bool AntiAFK { set; }
 
         void DisableWarden();
+
+        Task StartExecuteScriptAtEachFrameAsync(string luaScript);
 
         #endregion Methods
     }

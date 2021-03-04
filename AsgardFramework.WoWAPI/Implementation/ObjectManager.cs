@@ -64,6 +64,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
             obj.Object = readObject(obj.Common, m_playerGuid);
 
+            obj.Name = await m_functions.GetNameAsync(obj.Base)
+                                        .ConfigureAwait(false);
+
             return obj;
         }
 
@@ -81,6 +84,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
                 obj.Position = await m_functions.GetPositionAsync(obj.Base)
                                                 .ConfigureAwait(false);
+
+                obj.Name = await m_functions.GetNameAsync(obj.Base)
+                                            .ConfigureAwait(false);
             }
 
             return objects;

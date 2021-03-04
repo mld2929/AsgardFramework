@@ -412,20 +412,17 @@ namespace AsgardFramework.WoWAPI.Implementation
             return result;
         }
 
-        private IAutoManagedMemory stringToPtr(string value) {
-            var size = Encoding.UTF8.GetByteCount(value) + 1;
-
-            var reserved = m_buffer.Reserve(size);
-            reserved.WriteNullTerminatedString(0, value, Encoding.UTF8);
-
-            return reserved;
+        private async Task<bool> runAndGetBool(int luaFunction) {
+            return await runAndGetInt(luaFunction)
+                       .ConfigureAwait(false) !=
+                   0;
         }
 
         private async Task<int> runAndGetInt(int luaFunction) {
             var buffer = m_buffer.Reserve(4);
 
             await m_executor.ExecuteAsync(new LuaVMWrapper().CallLuaFunction(luaFunction)
-                                                            .PopInteger()
+                                                            .PopInteger(buffer)
                                                             .CompileScript(m_assembler))
                             .ConfigureAwait(false);
 
@@ -435,10 +432,13 @@ namespace AsgardFramework.WoWAPI.Implementation
             return result;
         }
 
-        private async Task<bool> runAndGetBool(int luaFunction) {
-            return await runAndGetInt(luaFunction)
-                       .ConfigureAwait(false) !=
-                   0;
+        private IAutoManagedMemory stringToPtr(string value) {
+            var size = Encoding.UTF8.GetByteCount(value) + 1;
+
+            var reserved = m_buffer.Reserve(size);
+            reserved.WriteNullTerminatedString(0, value, Encoding.UTF8);
+
+            return reserved;
         }
 
         #endregion Methods

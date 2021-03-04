@@ -10,9 +10,21 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal partial class FunctionsAccessor : IInjectedFunctions
     {
+        #region Fields
+
         private readonly List<IAutoManagedMemory> m_gcSafe = new List<IAutoManagedMemory>();
 
+        #endregion Fields
+
         #region Methods
+
+        public bool AntiAFK {
+            set => ((EndSceneHookExecutor)m_executor).AntiAFK = value; // yeah type cast
+        }
+
+        public void DisableWarden() {
+            m_memory.LoadDll($"{AppDomain.CurrentDomain.BaseDirectory}/AsgardFramework.WardenDefuser.dll");
+        }
 
         public Task StartExecuteScriptAtEachFrameAsync(string luaScript) {
             const int runScript = 0x004DD490;
@@ -23,14 +35,6 @@ namespace AsgardFramework.WoWAPI.Implementation
             return m_executor.StartExecutePermanentlyAsync(new LuaVMWrapper().PushStringPtr(pScript)
                                                                              .CallLuaFunction(runScript)
                                                                              .CompileScript(m_assembler));
-        }
-
-        public bool AntiAFK {
-            set => ((EndSceneHookExecutor)m_executor).AntiAFK = value; // yeah type cast 
-        }
-
-        public void DisableWarden() {
-            m_memory.LoadDll($"{AppDomain.CurrentDomain.BaseDirectory}/AsgardFramework.WardenDefuser.dll");
         }
 
         #endregion Methods

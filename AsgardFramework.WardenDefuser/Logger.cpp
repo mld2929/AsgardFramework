@@ -24,7 +24,8 @@ void Logger::release()
 
 void Logger::dump(const unsigned char* start, unsigned size, const std::string& description)
 {
-	*out << "DUMP [0x" << std::hex << reinterpret_cast<int>(start) << " -- 0x" << std::hex << reinterpret_cast<int>(start + size) << "] (" << description  << "):" << std::endl;
+	*out << "DUMP [0x" << std::hex << reinterpret_cast<int>(start) << " -- 0x" << std::hex << reinterpret_cast<int>(
+		start + size) << "] (" << description << "):" << std::endl;
 	std::vector<unsigned char> data(start, start + size);
 	std::stringstream str_stream;
 	for (const auto b : data)

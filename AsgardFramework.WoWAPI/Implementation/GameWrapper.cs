@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 using AsgardFramework.CodeInject;
 using AsgardFramework.FasmManaged;
@@ -26,6 +27,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
             m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(memory.Value, m_functions.Value));
             m_spellBook = new Lazy<ISpellBook>(() => new SpellBook(memory.Value));
+            m_playerName = new Lazy<string>(() => memory.Value.ReadNullTerminatedString(c_playerName, Encoding.UTF8));
+            m_currentAccount = new Lazy<string>(() => memory.Value.ReadNullTerminatedString(c_currentAccount, Encoding.UTF8));
+            m_currentRealm = new Lazy<string>(() => memory.Value.ReadNullTerminatedString(c_currentRealm, Encoding.UTF8));
         }
 
         #endregion Constructors
@@ -42,10 +46,16 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Fields
 
+        private const int c_currentAccount = 0x00B6AA40;
+        private const int c_currentRealm = 0x00C79B9E;
+        private const int c_playerName = 0x00C79D18;
+        private readonly Lazy<string> m_currentAccount;
+        private readonly Lazy<string> m_currentRealm;
         private readonly Lazy<FunctionsAccessor> m_functions;
 
         private readonly Lazy<IObjectManager> m_objectManager;
 
+        private readonly Lazy<string> m_playerName;
         private readonly Lazy<ISpellBook> m_spellBook;
 
         #endregion Fields
@@ -57,6 +67,8 @@ namespace AsgardFramework.WoWAPI.Implementation
                    .Select(game => new GameWrapper(game))
                    .ToList();
 
+        public string CurrentAccount => m_currentAccount.Value;
+        public string CurrentRealm => m_currentRealm.Value;
         public IGameAPIFunctions GameAPIFunctions => m_functions.Value;
 
         public IGameFunctions GameFunctions => m_functions.Value;
@@ -67,6 +79,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public IObjectManager ObjectManager => m_objectManager.Value;
 
+        public string PlayerName => m_playerName.Value;
         public ISpellBook SpellBook => m_spellBook.Value;
 
         #endregion Properties
