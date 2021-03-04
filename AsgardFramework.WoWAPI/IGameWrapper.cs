@@ -1,6 +1,8 @@
-﻿namespace AsgardFramework.WoWAPI
+﻿using System;
+
+namespace AsgardFramework.WoWAPI
 {
-    public interface IGameWrapper
+    public interface IGameWrapper : IDisposable
     {
         #region Properties
 
