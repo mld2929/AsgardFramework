@@ -19,6 +19,8 @@ namespace AsgardFramework.WoWAPI
                               ulong playerOrTargetGuid,
                               float precision);
 
+        Task ClickToMoveStopAsync();
+
         Task<int> GetItemIdByNameAsync(string itemName);
 
         Task<string> GetNameAsync(int objBase);

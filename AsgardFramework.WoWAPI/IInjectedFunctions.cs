@@ -12,6 +12,8 @@ namespace AsgardFramework.WoWAPI
 
         Task StartExecuteScriptAtEachFrameAsync(string luaScript);
 
+        void Teleport(int playerBase, float x, float y, float z);
+
         #endregion Methods
     }
 }

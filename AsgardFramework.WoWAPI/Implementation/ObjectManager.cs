@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 using AsgardFramework.Memory;
@@ -12,8 +13,9 @@ namespace AsgardFramework.WoWAPI.Implementation
     {
         #region Constructors
 
-        internal ObjectManager(IGlobalMemory memory, IGameFunctions functions) {
+        internal ObjectManager(IGlobalMemory memory, IGameFunctions functions, IAggregatedFunctions aggregatedFunctions) {
             m_functions = functions;
+            m_aggregatedFunctions = aggregatedFunctions;
             m_memory = memory;
 
             var pObjManager = m_memory.Read<int>(c_staticClientConnection) + c_objManagerOffset;
@@ -41,6 +43,8 @@ namespace AsgardFramework.WoWAPI.Implementation
         private const int c_staticClientConnection = 0x00C79CE0;
 
         private readonly IGameFunctions m_functions;
+
+        private readonly IAggregatedFunctions m_aggregatedFunctions;
 
         private readonly IGlobalMemory m_memory;
 
@@ -71,25 +75,33 @@ namespace AsgardFramework.WoWAPI.Implementation
         }
 
         public async Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields) {
-            var objects = getRawEnumerable()
+            var data = getRawEnumerable()
                 .ToList();
 
             if (!setAllFields)
-                return objects;
+                return data;
 
             var playerGuid = m_playerGuid;
 
-            foreach (var obj in objects) {
-                obj.Object = readObject(obj.Common, playerGuid);
+            var ids = data.Select(obj => obj.Base);
 
-                obj.Position = await m_functions.GetPositionAsync(obj.Base)
-                                                .ConfigureAwait(false);
+            var objects = data.Select(d => readObject(d.Common, playerGuid))
+                              .ToList();
 
-                obj.Name = await m_functions.GetNameAsync(obj.Base)
-                                            .ConfigureAwait(false);
+            var positions = (await m_aggregatedFunctions.GetPositionsAsync(ids)
+                                                        .ConfigureAwait(false)).ToList();
+
+            var names = (await m_aggregatedFunctions.GetNamesAsync(ids)
+                                                    .ConfigureAwait(false)).ToList();
+
+            for (var i = 0; i < data.Count; i++) {
+                var current = data[i];
+                current.Object = objects[i];
+                current.Position = positions[i];
+                current.Name = names[i];
             }
 
-            return objects;
+            return data;
         }
 
         public Task<ObjectData> GetPlayerAsync() {
@@ -103,7 +115,7 @@ namespace AsgardFramework.WoWAPI.Implementation
         private Object readObject(Common commonData, ulong playerGuid) {
             return commonData?.Type switch {
                 ObjectType.Item => m_memory.Read<Item>(commonData.Fields),
-                ObjectType.Container => m_memory.Read<Container>(commonData.Fields),
+                ObjectType.Container => readContainer(commonData),
                 ObjectType.Unit => m_memory.Read<Unit>(commonData.Fields),
                 ObjectType.Player => commonData.Guid == playerGuid ? m_memory.Read<Player>(commonData.Fields) : m_memory.Read<Unit>(commonData.Fields),
                 ObjectType.GameObject => m_memory.Read<GameObject>(commonData.Fields),
@@ -111,6 +123,21 @@ namespace AsgardFramework.WoWAPI.Implementation
                 ObjectType.Corpse => m_memory.Read<Corpse>(commonData.Fields),
                 _ => null
             };
+        }
+
+        private Container readContainer(Common data) {
+            var result = m_memory.Read<Container>(data.Fields);
+            var start = data.Fields + Marshal.SizeOf<Container>() - 8;
+
+            result.Items = m_memory.Read(start, start + result.Slots * 8)
+                                   .ToArrayOfUInt64()
+                                   .ToArray();
+
+            return result;
+        }
+
+        public Item ContainerAsItem(Common container) {
+            return m_memory.Read<Item>(container.Fields);
         }
 
         #endregion Methods

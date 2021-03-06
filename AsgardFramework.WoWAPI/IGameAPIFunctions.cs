@@ -238,6 +238,24 @@ namespace AsgardFramework.WoWAPI
         /// <param name="unitMetaId">A unit to query</param>
         Task<bool> UnitIsPlayerAsync(string unitMetaId);
 
+        /// <summary>
+        ///     Returns whether a unit is connected (i.e. not Offline)
+        /// </summary>
+        /// <param name="unitMetaId">A unit to query</param>
+        Task<bool> UnitIsConnectedAsync(string unitMetaId);
+
+        /// <summary>
+        ///     Returns whether a unit is either dead or a ghost
+        /// </summary>
+        /// <param name="unitMetaId">A unit to query</param>
+        Task<bool> UnitIsDeadOrGhostAsync(string unitMetaId);
+
+        /// <summary>
+        ///     Returns the number of free slots in a container and the types of items it can hold
+        /// </summary>
+        /// <param name="containerId">Index of one of the player's bags or other containers</param>
+        Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId);
+
         #endregion Methods
     }
 }

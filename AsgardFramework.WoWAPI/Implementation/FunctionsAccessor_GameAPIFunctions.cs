@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.Memory;
@@ -383,6 +384,18 @@ namespace AsgardFramework.WoWAPI.Implementation
             buffer.Dispose();
 
             return result != 0;
+        }
+
+        public Task<bool> UnitIsConnectedAsync(string unitMetaId) {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> UnitIsDeadOrGhostAsync(string unitMetaId) {
+            throw new NotImplementedException();
+        }
+
+        public Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId) {
+            throw new NotImplementedException();
         }
 
         private async Task<SpellInfo> getSpellInfoImplAsync(LuaVMWrapper withPushedArgument) {

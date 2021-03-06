@@ -40,6 +40,10 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
+        public Task ClickToMoveStopAsync() {
+            throw new NotImplementedException();
+        }
+
         public Task<int> GetItemIdByNameAsync(string itemName) {
             throw new NotImplementedException();
         }

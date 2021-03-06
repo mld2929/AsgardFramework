@@ -2,13 +2,14 @@
 
 namespace AsgardFramework.WoWAPI.Objects
 {
-    [StructLayout(LayoutKind.Explicit, Pack = 0x1, Size = 0x10)]
-    public sealed class Container : Item
+    [StructLayout(LayoutKind.Explicit, Pack = 0x1)]
+    public class Container : Object
     {
-        [FieldOffset(-0xe8 - 0x18 + 0x108)]
-        public readonly ulong FirstSlotGuid;
+        [FieldOffset(0)]
+        public readonly int Slots;
 
-        [FieldOffset(-0xe8 - 0x18 + 0x100)]
-        public readonly uint Slots;
+        [field: FieldOffset(8)]
+        [field: MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public ulong[] Items { get; internal set; }
     }
 }

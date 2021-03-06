@@ -33,6 +33,17 @@ namespace AsgardFramework.WoWAPI.Utils
             return result;
         }
 
+        internal static IEnumerable<ulong> ToArrayOfUInt64(this byte[] bytes) {
+            var size = bytes.Length / 8;
+            var result = new ulong[size];
+
+            for (var i = 0; i < size - 1; i++)
+                result[i] = bytes[(i * 8)..((i + 1) * 8)]
+                    .ToUInt64();
+
+            return result;
+        }
+
         internal static byte[] ToBytes(this int value) {
             return BitConverter.GetBytes(value);
         }

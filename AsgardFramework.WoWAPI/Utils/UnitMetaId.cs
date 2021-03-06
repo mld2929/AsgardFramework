@@ -144,6 +144,10 @@ namespace AsgardFramework.WoWAPI.Utils
             return right == Target ? new UnitMetaId(left.m_metaId + right.m_metaId) : left;
         }
 
+        public override string ToString() {
+            return this;
+        }
+
         #endregion Methods
     }
 }

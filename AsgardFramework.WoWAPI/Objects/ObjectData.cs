@@ -4,7 +4,7 @@
     {
         #region Fields
 
-        internal readonly int Base;
+        public readonly int Base;
 
         #endregion Fields
 

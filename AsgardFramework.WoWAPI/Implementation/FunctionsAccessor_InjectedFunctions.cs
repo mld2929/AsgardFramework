@@ -37,6 +37,15 @@ namespace AsgardFramework.WoWAPI.Implementation
                                                                              .CompileScript(m_assembler));
         }
 
+        public void Teleport(int playerBase, float x, float y, float z) {
+            const int pos_x = 0x79C;
+            const int pos_y = 0x798;
+            const int pos_z = 0x7A0;
+            m_memory.Write(playerBase + pos_x, x);
+            m_memory.Write(playerBase + pos_y, y);
+            m_memory.Write(playerBase + pos_z, z);
+        }
+
         #endregion Methods
     }
 }

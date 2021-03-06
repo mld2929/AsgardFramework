@@ -25,11 +25,8 @@ namespace AsgardFramework.WoWAPI.Implementation
 
             m_functions = new Lazy<FunctionsAccessor>(() => new FunctionsAccessor(hook.Value, assembler.Value, m_memory.Value));
 
-            m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(m_memory.Value, m_functions.Value));
+            m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(m_memory.Value, m_functions.Value, m_functions.Value));
             m_spellBook = new Lazy<ISpellBook>(() => new SpellBook(m_memory.Value));
-            m_playerName = new Lazy<string>(() => m_memory.Value.ReadNullTerminatedString(c_playerName, Encoding.UTF8));
-            m_currentAccount = new Lazy<string>(() => m_memory.Value.ReadNullTerminatedString(c_currentAccount, Encoding.UTF8));
-            m_currentRealm = new Lazy<string>(() => m_memory.Value.ReadNullTerminatedString(c_currentRealm, Encoding.UTF8));
         }
 
         #endregion Constructors
@@ -42,17 +39,11 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private const int c_playerName = 0x00C79D18;
 
-        private readonly Lazy<string> m_currentAccount;
-
-        private readonly Lazy<string> m_currentRealm;
-
         private readonly Lazy<FunctionsAccessor> m_functions;
 
         private readonly Lazy<IGlobalMemory> m_memory;
 
         private readonly Lazy<IObjectManager> m_objectManager;
-
-        private readonly Lazy<string> m_playerName;
 
         private readonly Lazy<ISpellBook> m_spellBook;
 
@@ -65,9 +56,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                    .Select(game => new GameWrapper(game))
                    .ToList();
 
-        public string CurrentAccount => m_currentAccount.Value;
+        public string CurrentAccount => m_memory.Value.ReadNullTerminatedString(c_currentAccount, Encoding.UTF8);
 
-        public string CurrentRealm => m_currentRealm.Value;
+        public string CurrentRealm => m_memory.Value.ReadNullTerminatedString(c_currentRealm, Encoding.UTF8);
 
         public IGameAPIFunctions GameAPIFunctions => m_functions.Value;
 
@@ -79,7 +70,7 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public IObjectManager ObjectManager => m_objectManager.Value;
 
-        public string PlayerName => m_playerName.Value;
+        public string PlayerName => m_memory.Value.ReadNullTerminatedString(c_playerName, Encoding.UTF8);
 
         public ISpellBook SpellBook => m_spellBook.Value;
 
