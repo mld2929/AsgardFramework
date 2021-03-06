@@ -90,7 +90,7 @@ namespace AsgardFramework.AsgardLite
                                     .Select(obj => obj.Object.As<Container>())
                                     .ToList();
 
-            var items = objects.Where(obj => obj.Common.Type == ObjectType.Item || obj.Common.Type == ObjectType.Container && !containers.Contains(obj.Object))
+            var items = objects.Where(obj => !containers.Contains(obj.Object))
                                .Select(obj => obj.Common.Type switch {
                                    ObjectType.Container => m_game.ObjectManager.ContainerAsItem(obj.Common),
                                    ObjectType.Item => obj.Object.As<Item>(),
@@ -110,7 +110,7 @@ namespace AsgardFramework.AsgardLite
 
             async Task<Bag> createBag(Container c, int i) {
                 return new Bag(joinAndRemoveFromList(c.Items), c.Slots, (await m_game.GameAPIFunctions.GetContainerNumFreeSlotsAsync(i)
-                                                                                     .ConfigureAwait(false)).bagType, objects.Find(obj => obj.Object == c)
+                                                                                     .ConfigureAwait(false)).bagType, objects.Find(obj => obj.Object == c)!
                                                                                                                              .Name);
             }
 
