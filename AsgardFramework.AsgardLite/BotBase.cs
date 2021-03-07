@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using AsgardFramework.WoWAPI;
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 
 namespace AsgardFramework.AsgardLite
 {

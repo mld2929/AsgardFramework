@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 using AsgardFramework.WoWAPI.Objects;
 
 namespace AsgardFramework.WoWAPI

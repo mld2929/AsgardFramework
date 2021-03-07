@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 
 namespace AsgardFramework.WoWAPI
 {
@@ -36,6 +36,12 @@ namespace AsgardFramework.WoWAPI
         /// </remarks>
         /// <param name="itemId">An item's ID</param>
         Task EquipItemAsync(int itemId);
+
+        /// <summary>
+        ///     Returns the number of free slots in a container and the types of items it can hold
+        /// </summary>
+        /// <param name="containerId">Index of one of the player's bags or other containers</param>
+        Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId);
 
         /// <summary>
         ///     Returns information about the spell cast by an item's <c>"Use:"</c> effect
@@ -227,16 +233,21 @@ namespace AsgardFramework.WoWAPI
         Task RunScriptAsync(string luaScript);
 
         /// <summary>
+        ///     Runs a string as a Lua script. Protected functions are available. Saves <paramref name="fieldsCount" /> variables
+        ///     from first expression
+        /// </summary>
+        Task<T> RunScriptAsync<T>(string luaScript, int fieldsCount = 10) where T : LuaValue, new();
+
+        /// <summary>
+        ///     Runs a string as a Lua script. Protected functions are available
+        /// </summary>
+        Task<string> RunScriptAsync(string luaScript, string retVariableName);
+
+        /// <summary>
         ///     Causes the player character to automatically follow another unit. Only friendly player units can be followed.
         /// </summary>
         /// <param name="unitMetaIdOrName">A unit to follow</param>
         Task StartFollowUnitAsync(string unitMetaIdOrName);
-
-        /// <summary>
-        ///     Returns whether a unit is a player unit (not an NPC)
-        /// </summary>
-        /// <param name="unitMetaId">A unit to query</param>
-        Task<bool> UnitIsPlayerAsync(string unitMetaId);
 
         /// <summary>
         ///     Returns whether a unit is connected (i.e. not Offline)
@@ -251,10 +262,10 @@ namespace AsgardFramework.WoWAPI
         Task<bool> UnitIsDeadOrGhostAsync(string unitMetaId);
 
         /// <summary>
-        ///     Returns the number of free slots in a container and the types of items it can hold
+        ///     Returns whether a unit is a player unit (not an NPC)
         /// </summary>
-        /// <param name="containerId">Index of one of the player's bags or other containers</param>
-        Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId);
+        /// <param name="unitMetaId">A unit to query</param>
+        Task<bool> UnitIsPlayerAsync(string unitMetaId);
 
         #endregion Methods
     }

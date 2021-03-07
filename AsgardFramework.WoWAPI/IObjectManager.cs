@@ -9,12 +9,13 @@ namespace AsgardFramework.WoWAPI
     {
         #region Methods
 
+        Item ContainerAsItem(Common container);
+
         Task<ObjectData> GetObjectByGuidAsync(ulong guid);
 
         Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields);
 
         Task<ObjectData> GetPlayerAsync();
-        Item ContainerAsItem(Common container);
 
         #endregion Methods
     }

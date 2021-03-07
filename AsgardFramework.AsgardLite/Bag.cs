@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 using AsgardFramework.WoWAPI.Objects;
 
 namespace AsgardFramework.AsgardLite

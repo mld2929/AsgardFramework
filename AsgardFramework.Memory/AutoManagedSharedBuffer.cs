@@ -107,8 +107,8 @@ namespace AsgardFramework.Memory
         #region Methods
 
         protected override bool ReleaseHandle() {
-            this[..] = new byte[m_data.Size];
             m_data.Reserved = false;
+
             return true;
         }
 

@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 
 using AsgardFramework.WoWAPI;
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 using AsgardFramework.WoWAPI.Objects;
 using AsgardFramework.WoWAPI.Utils;
 
@@ -110,8 +110,7 @@ namespace AsgardFramework.AsgardLite
 
             async Task<Bag> createBag(Container c, int i) {
                 return new Bag(joinAndRemoveFromList(c.Items), c.Slots, (await m_game.GameAPIFunctions.GetContainerNumFreeSlotsAsync(i)
-                                                                                     .ConfigureAwait(false)).bagType, objects.Find(obj => obj.Object == c)!
-                                                                                                                             .Name);
+                                                                                     .ConfigureAwait(false)).bagType, objects.Find(obj => obj.Object == c)!.Name);
             }
 
             var bags = new List<Bag>(5);

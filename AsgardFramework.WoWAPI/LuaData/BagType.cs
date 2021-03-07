@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AsgardFramework.WoWAPI.Info
+namespace AsgardFramework.WoWAPI.LuaData
 {
     [Flags]
     public enum BagType
@@ -19,5 +19,16 @@ namespace AsgardFramework.WoWAPI.Info
         Unused = 0x800,
         VanityPets = 0x1000,
         TackleBox = 0x100000
+    }
+
+    public sealed class LuaBagType : LuaValue<BagType>
+    {
+        #region Methods
+
+        protected override BagType ParseData(string[] data) {
+            return (BagType)int.Parse(data[0]);
+        }
+
+        #endregion Methods
     }
 }

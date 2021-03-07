@@ -42,10 +42,8 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private const int c_staticClientConnection = 0x00C79CE0;
 
-        private readonly IGameFunctions m_functions;
-
         private readonly IAggregatedFunctions m_aggregatedFunctions;
-
+        private readonly IGameFunctions m_functions;
         private readonly IGlobalMemory m_memory;
 
         private readonly int m_objListStart;
@@ -55,6 +53,10 @@ namespace AsgardFramework.WoWAPI.Implementation
         #endregion Fields
 
         #region Methods
+
+        public Item ContainerAsItem(Common container) {
+            return m_memory.Read<Item>(container.Fields);
+        }
 
         public async Task<ObjectData> GetObjectByGuidAsync(ulong guid) {
             var obj = getRawEnumerable()
@@ -112,19 +114,6 @@ namespace AsgardFramework.WoWAPI.Implementation
             return new ObjectsEnumerable(m_memory, m_objListStart);
         }
 
-        private Object readObject(Common commonData, ulong playerGuid) {
-            return commonData?.Type switch {
-                ObjectType.Item => m_memory.Read<Item>(commonData.Fields),
-                ObjectType.Container => readContainer(commonData),
-                ObjectType.Unit => m_memory.Read<Unit>(commonData.Fields),
-                ObjectType.Player => commonData.Guid == playerGuid ? m_memory.Read<Player>(commonData.Fields) : m_memory.Read<Unit>(commonData.Fields),
-                ObjectType.GameObject => m_memory.Read<GameObject>(commonData.Fields),
-                ObjectType.DynamicObject => m_memory.Read<DynamicObject>(commonData.Fields),
-                ObjectType.Corpse => m_memory.Read<Corpse>(commonData.Fields),
-                _ => null
-            };
-        }
-
         private Container readContainer(Common data) {
             var result = m_memory.Read<Container>(data.Fields);
             var start = data.Fields + Marshal.SizeOf<Container>() - 8;
@@ -136,8 +125,17 @@ namespace AsgardFramework.WoWAPI.Implementation
             return result;
         }
 
-        public Item ContainerAsItem(Common container) {
-            return m_memory.Read<Item>(container.Fields);
+        private Object readObject(Common commonData, ulong playerGuid) {
+            return commonData?.Type switch {
+                ObjectType.Item => m_memory.Read<Item>(commonData.Fields),
+                ObjectType.Container => readContainer(commonData),
+                ObjectType.Unit => m_memory.Read<Unit>(commonData.Fields),
+                ObjectType.Player => commonData.Guid == playerGuid ? m_memory.Read<Player>(commonData.Fields) : m_memory.Read<Unit>(commonData.Fields),
+                ObjectType.GameObject => m_memory.Read<GameObject>(commonData.Fields),
+                ObjectType.DynamicObject => m_memory.Read<DynamicObject>(commonData.Fields),
+                ObjectType.Corpse => m_memory.Read<Corpse>(commonData.Fields),
+                _ => null
+            };
         }
 
         #endregion Methods

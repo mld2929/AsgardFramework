@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 using AsgardFramework.WoWAPI.Objects;
 using AsgardFramework.WoWAPI.Utils;
 
@@ -12,6 +12,8 @@ namespace AsgardFramework.WoWAPI.Implementation
 {
     internal partial class FunctionsAccessor : IAggregatedFunctions
     {
+        #region Methods
+
         public Task<IEnumerable<LootSlotInfo>> GetLootSlotsInfoAsync(Range range) {
             throw new NotImplementedException();
         }
@@ -100,5 +102,7 @@ namespace AsgardFramework.WoWAPI.Implementation
         public Task<IEnumerable<UnitAuraInfo>> GetUnitAurasInfoAsync(string unitName, Range range, string filter) {
             throw new NotImplementedException();
         }
+
+        #endregion Methods
     }
 }

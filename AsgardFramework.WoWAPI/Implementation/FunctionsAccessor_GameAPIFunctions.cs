@@ -1,347 +1,139 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Info;
+using AsgardFramework.WoWAPI.LuaData;
 using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
+    internal static class TaskHelper
+    {
+        #region Methods
+
+        public static async Task<TTo> Cast<TTo, TSource>(this Task<TSource> task) where TSource : LuaValue<TTo> {
+            return await task.ConfigureAwait(false);
+        }
+
+        #endregion Methods
+    }
+
     internal partial class FunctionsAccessor : IGameAPIFunctions
     {
         #region Methods
 
         public Task AttackTargetAsync() {
-            const int attackTarget = 0x0051A650;
-
-            return m_executor.ExecuteAsync(new LuaVMWrapper().CallLuaFunction(attackTarget)
-                                                             .CompileScript(m_assembler));
+            return RunScriptAsync("AttackTarget()");
         }
 
         public Task DismountAsync() {
-            const int dismount = 0x0051D170;
-            var bytes = m_assembler.Assemble(dismount.CallViaEax());
-
-            return m_executor.ExecuteAsync(bytes.ToCodeBlock());
+            return RunScriptAsync("Dismount()");
         }
 
-        public async Task EquipItemAsync(string name) {
-            const int equipItem = 0x0051CDB0;
-            var pName = stringToPtr(name);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pName)
-                                                            .CallLuaFunction(equipItem)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            pName.Dispose();
+        public Task EquipItemAsync(string name) {
+            return RunScriptAsync($"EquipItemByName({name})");
         }
 
         public Task EquipItemAsync(int itemId) {
-            const int equipItem = 0x0051CDB0;
-
-            return m_executor.ExecuteAsync(new LuaVMWrapper().PushInt(itemId)
-                                                             .CallLuaFunction(equipItem)
-                                                             .CompileScript(m_assembler));
+            return RunScriptAsync($"EquipItemByName({itemId})");
         }
 
-        public async Task<ItemSpellInfo> GetItemSpellAsync(string itemName) {
-            const int getItemSpell = 0x00517100;
-            const int itemSpellInfoSize = 8;
-            var pName = stringToPtr(itemName);
-            var itemSpellInfo = m_buffer.Reserve(itemSpellInfoSize);
+        public async Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId) {
+            var data = (List<string>)await RunScriptAsync<LuaStringList>($"GetContainerNumFreeSlots({containerId})", 2)
+                                         .ConfigureAwait(false);
 
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pName)
-                                                            .CallLuaFunction(getItemSpell)
-                                                            .PopStringPtr(itemSpellInfo)
-                                                            .PopStringPtr(itemSpellInfo)
-                                                            .CompileScript(m_assembler))
+            return (data[0]
+                        .ToInt(), data[1]
+                        .ToEnum<BagType>());
+        }
+
+        public Task<ItemSpellInfo> GetItemSpellAsync(string itemName) {
+            return RunScriptAsync<ItemSpellInfo>($"GetItemSpell({itemName})");
+        }
+
+        public Task<ItemSpellInfo> GetItemSpellAsync(int itemId) {
+            return RunScriptAsync<ItemSpellInfo>($"GetItemSpell({itemId})");
+        }
+
+        public Task<LootSlotInfo> GetLootSlotInfoAsync(int slotNumberFromOne) {
+            return RunScriptAsync<LootSlotInfo>($"GetLootSlotInfo({slotNumberFromOne})");
+        }
+
+        public async Task<int> GetNumLootItemsAsync() {
+            return (int)await RunScriptAsync<LuaNumber>("GetNumLootItems()", 1)
                             .ConfigureAwait(false);
-
-            var result = new ItemSpellInfo(itemSpellInfo.Read<ItemSpellInfoRaw>(0), m_memory);
-            pName.Dispose();
-            itemSpellInfo.Dispose();
-
-            return result;
         }
 
-        public async Task<ItemSpellInfo> GetItemSpellAsync(int itemId) {
-            const int getItemSpell = 0x00517100;
-            const int itemSpellInfoSize = 8;
-            var itemSpellInfo = m_buffer.Reserve(itemSpellInfoSize);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushInt(itemId)
-                                                            .CallLuaFunction(getItemSpell)
-                                                            .PopStringPtr(itemSpellInfo)
-                                                            .PopStringPtr(itemSpellInfo)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new ItemSpellInfo(itemSpellInfo.Read<ItemSpellInfoRaw>(0), m_memory);
-            itemSpellInfo.Dispose();
-
-            return result;
+        public Task<SpellCooldownInfo> GetSpellCooldownAsync(string name) {
+            return RunScriptAsync<SpellCooldownInfo>($"GetSpellCooldown({name})");
         }
 
-        public async Task<LootSlotInfo> GetLootSlotInfoAsync(int slotNumberFromOne) {
-            const int getLootSlotInfo = 0x00588570;
-            const int lootSlotInfoSize = 20;
-            var lootSlotInfo = m_buffer.Reserve(lootSlotInfoSize);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushInt(slotNumberFromOne)
-                                                            .CallLuaFunction(getLootSlotInfo)
-                                                            .PopStringPtr(lootSlotInfo)
-                                                            .PopStringPtr(lootSlotInfo)
-                                                            .PopInteger(lootSlotInfo)
-                                                            .PopInteger(lootSlotInfo)
-                                                            .PopInteger(lootSlotInfo)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new LootSlotInfo(lootSlotInfo.Read<LootSlotInfoRaw>(0), m_memory);
-            lootSlotInfo.Dispose();
-
-            return result;
-        }
-
-        public Task<int> GetNumLootItemsAsync() {
-            const int getNumLootItems = 0x00588540;
-
-            return runAndGetInt(getNumLootItems);
-        }
-
-        public async Task<SpellCooldownInfo> GetSpellCooldownAsync(string name) {
-            const int getSpellCooldown = 0x00540E80;
-            const int spellCooldownSize = 20;
-            var spellCooldown = m_buffer.Reserve(spellCooldownSize);
-            var pName = stringToPtr(name);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pName)
-                                                            .CallLuaFunction(getSpellCooldown)
-                                                            .PopNumber(spellCooldown)
-                                                            .PopNumber(spellCooldown)
-                                                            .PopInteger(spellCooldown)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = spellCooldown.Read<SpellCooldownInfo>(0);
-            spellCooldown.Dispose();
-            pName.Dispose();
-
-            return result;
-        }
-
-        public async Task<SpellCooldownInfo> GetSpellCooldownAsync(int spellId) {
-            const int getSpellCooldown = 0x00540E80;
-            const int spellCooldownSize = 20;
-            var spellCooldown = m_buffer.Reserve(spellCooldownSize);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushInt(spellId)
-                                                            .CallLuaFunction(getSpellCooldown)
-                                                            .PopNumber(spellCooldown)
-                                                            .PopNumber(spellCooldown)
-                                                            .PopInteger(spellCooldown)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = spellCooldown.Read<SpellCooldownInfo>(0);
-            spellCooldown.Dispose();
-
-            return result;
+        public Task<SpellCooldownInfo> GetSpellCooldownAsync(int spellId) {
+            return RunScriptAsync<SpellCooldownInfo>($"GetSpellCooldown({spellId})");
         }
 
         public Task<SpellInfo> GetSpellInfoAsync(int spellId) {
-            return getSpellInfoImplAsync(new LuaVMWrapper().PushInt(spellId));
+            return RunScriptAsync<SpellInfo>($"GetSpellInfo({spellId})");
         }
 
-        public async Task<SpellInfo> GetSpellInfoAsync(string spellName) {
-            var ptr = stringToPtr(spellName);
-
-            var info = await getSpellInfoImplAsync(new LuaVMWrapper().PushStringPtr(ptr.Start))
-                           .ConfigureAwait(false);
-
-            ptr.Dispose();
-
-            return info;
+        public Task<SpellInfo> GetSpellInfoAsync(string spellName) {
+            return RunScriptAsync<SpellInfo>($"GetSpellInfo({spellName})");
         }
 
-        public async Task<UnitAuraInfo> GetUnitAuraAsync(string unitMetaId, int index, string filter = null) {
-            const int unitAura = 0x00614D40;
-            const int unitAuraInfoSize = 52;
-            var pMeta = stringToPtr(unitMetaId);
-            var pFilter = filter != null ? stringToPtr(filter) : null;
-            var unitAuraInfo = m_buffer.Reserve(unitAuraInfoSize);
+        public Task<UnitAuraInfo> GetUnitAuraAsync(string unitMetaId, int index, string filter = null) {
+            var strFilter = filter != null ? $", {filter}" : string.Empty;
 
-            var script = new LuaVMWrapper().PushStringPtr(pMeta)
-                                           .PushInt(index);
-
-            if (filter != null)
-                script = script.PushStringPtr(pFilter);
-
-            await m_executor.ExecuteAsync(script.CallLuaFunction(unitAura)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopNumber(unitAuraInfo)
-                                                .PopNumber(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new UnitAuraInfo(unitAuraInfo.Read<UnitAuraInfoRaw>(0), m_memory);
-            pMeta.Dispose();
-            pFilter?.Dispose();
-            unitAuraInfo.Dispose();
-
-            return result;
+            return RunScriptAsync<UnitAuraInfo>($"UnitAura({unitMetaId}, {index}{strFilter})", 11);
         }
 
-        public async Task<UnitAuraInfo> GetUnitAuraAsync(string unitMetaId, string auraName, string auraSecondaryText = null, string filter = null) {
-            const int unitAura = 0x00614D40;
-            const int unitAuraInfoSize = 52;
-            var pMeta = stringToPtr(unitMetaId);
-            var pFilter = filter != null ? stringToPtr(filter) : null;
-            var pAuraName = stringToPtr(auraName);
-            var pSecondary = auraSecondaryText != null ? stringToPtr(auraSecondaryText) : null;
-            var unitAuraInfo = m_buffer.Reserve(unitAuraInfoSize);
+        public Task<UnitAuraInfo> GetUnitAuraAsync(string unitMetaId, string auraName, string auraSecondaryText = null, string filter = null) {
+            var strSecondary = auraSecondaryText != null ? $", {auraSecondaryText}" : string.Empty;
+            var strFilter = filter != null ? $", {filter}" : string.Empty;
 
-            var script = new LuaVMWrapper().PushStringPtr(pMeta)
-                                           .PushStringPtr(pAuraName);
-
-            if (auraSecondaryText != null)
-                script = script.PushStringPtr(pSecondary);
-
-            if (filter != null)
-                script = script.PushStringPtr(pFilter);
-
-            await m_executor.ExecuteAsync(script.CallLuaFunction(unitAura)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopStringPtr(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopNumber(unitAuraInfo)
-                                                .PopNumber(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .PopInteger(unitAuraInfo)
-                                                .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new UnitAuraInfo(unitAuraInfo.Read<UnitAuraInfoRaw>(0), m_memory);
-            pMeta.Dispose();
-            pFilter?.Dispose();
-            pSecondary?.Dispose();
-            pAuraName.Dispose();
-            unitAuraInfo.Dispose();
-
-            return result;
+            return RunScriptAsync<UnitAuraInfo>($"UnitAura({unitMetaId}, {auraName}{strSecondary}{strFilter})", 11);
         }
 
-        public async Task<UnitClassInfo> GetUnitClassAsync(string unitMetaIdOrName) {
-            const int unitClass = 0x0060FEC0;
-            const int unitClassInfoSize = 8;
-            var pMeta = stringToPtr(unitMetaIdOrName);
-            var unitClassInfo = m_buffer.Reserve(unitClassInfoSize);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pMeta)
-                                                            .CallLuaFunction(unitClass)
-                                                            .PopStringPtr(unitClassInfo)
-                                                            .PopStringPtr(unitClassInfo)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new UnitClassInfo(unitClassInfo.Read<UnitClassInfoRaw>(0), m_memory);
-            pMeta.Dispose();
-            unitClassInfo.Dispose();
-
-            return result;
+        public Task<UnitClassInfo> GetUnitClassAsync(string unitMetaIdOrName) {
+            return RunScriptAsync<UnitClassInfo>($"UnitClass({unitMetaIdOrName})", 2);
         }
 
-        public async Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName) {
-            const int unitFactionGroup = 0x0060D0A0;
-            const int unitFactionGroupInfoSize = 8;
-            var pMeta = stringToPtr(unitMetaIdOrName);
-            var unitFactionGroupInfo = m_buffer.Reserve(unitFactionGroupInfoSize);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pMeta)
-                                                            .CallLuaFunction(unitFactionGroup)
-                                                            .PopStringPtr(unitFactionGroupInfo)
-                                                            .PopStringPtr(unitFactionGroupInfo)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = new UnitFactionGroupInfo(unitFactionGroupInfo.Read<UnitFactionGroupInfoRaw>(0), m_memory);
-            pMeta.Dispose();
-            unitFactionGroupInfo.Dispose();
-
-            return result;
+        public Task<UnitFactionGroupInfo> GetUnitFactionGroupAsync(string unitMetaIdOrName) {
+            return RunScriptAsync<UnitFactionGroupInfo>($"UnitFactionGroup({unitMetaIdOrName})", 2);
         }
 
         public Task<bool> HasPlayerFullControlAsync() {
-            const int hasFullControl = 0x00611600;
-
-            return runAndGetBool(hasFullControl);
+            return RunScriptAsync<LuaBoolean>("HasFullControll()", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task<bool> IsLoggedInAsync() {
-            const int isLoggedIn = 0x0060A450;
-
-            return runAndGetBool(isLoggedIn);
+            return RunScriptAsync<LuaBoolean>("IsLoggedIn()", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task<bool> IsMountedAsync() {
-            const int isMounted = 0x006125A0;
-
-            return runAndGetBool(isMounted);
+            return RunScriptAsync<LuaBoolean>("IsMounted()", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task<bool> IsOutdoorsAsync() {
-            const int isOutdoors = 0x00612360;
-
-            return runAndGetBool(isOutdoors);
+            return RunScriptAsync<LuaBoolean>("IsOutdoors()", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task<bool> IsPlayerFallingAsync() {
-            const int isFalling = 0x00612430;
-
-            return runAndGetBool(isFalling);
+            return RunScriptAsync<LuaBoolean>("IsFalling()", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
-        public async Task<bool> IsUnitAffectingCombatAsync(string unitMetaId) {
-            const int unitAffectingCombat = 0x0060F860;
-            var buffer = m_buffer.Reserve(4);
-            var pMeta = stringToPtr(unitMetaId);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pMeta)
-                                                            .CallLuaFunction(unitAffectingCombat)
-                                                            .PopInteger(buffer)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = buffer.Read<int>(0);
-            pMeta.Dispose();
-            buffer.Dispose();
-
-            return result != 0;
+        public Task<bool> IsUnitAffectingCombatAsync(string unitMetaId) {
+            return RunScriptAsync<LuaBoolean>($"UnitAffectingCombat({unitMetaId})", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task LootSlotAsync(int slotNumberFromOne) {
-            const int lootSlot = 0x00589520;
-            var script = new LuaVMWrapper();
-
-            var compiled = script.PushInt(slotNumberFromOne)
-                                 .CallLuaFunction(lootSlot)
-                                 .CompileScript(m_assembler);
-
-            return m_executor.ExecuteAsync(compiled);
+            return RunScriptAsync($"LootSlot({slotNumberFromOne})");
         }
 
         public async Task RunScriptAsync(string luaScript) {
@@ -356,93 +148,90 @@ namespace AsgardFramework.WoWAPI.Implementation
             pScript.Dispose();
         }
 
-        public async Task StartFollowUnitAsync(string unitMetaIdOrName) {
-            const int followUnit = 0x005224C0;
-            var pMeta = stringToPtr(unitMetaIdOrName);
+        public async Task<T> RunScriptAsync<T>(string luaScript, int fieldsCount = 10) where T : LuaValue, new() {
+            const int runScript = 0x004DD490;
+            var sb = new StringBuilder();
 
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pMeta)
-                                                            .CallLuaFunction(followUnit)
-                                                            .CompileScript(m_assembler))
+            for (var i = 0; i < fieldsCount; i++) {
+                sb.Append('v');
+                sb.Append(i);
+                sb.Append(i + 1 == fieldsCount ? " = " : ", ");
+            }
+
+            sb.Append(luaScript);
+
+            var pScript = stringToPtr(sb.ToString());
+            var pVarNames = new IAutoManagedMemory[fieldsCount];
+            var pResult = m_buffer.Reserve(fieldsCount * 4);
+
+            var vm = new LuaVMWrapper().PushStringPtr(pScript)
+                                       .CallLuaFunction(runScript);
+
+            for (var i = 0; i < fieldsCount; i++) {
+                pVarNames[i] = stringToPtr($"v{i}");
+
+                vm.GetText(pResult + i * 4, pVarNames[i]
+                               .Start);
+            }
+
+            await m_executor.ExecuteAsync(vm.CompileScript(m_assembler))
                             .ConfigureAwait(false);
 
-            pMeta.Dispose();
+            var result = new List<string>(fieldsCount);
+
+            for (var i = 0; i < fieldsCount; i++)
+                result.Add(m_memory.ReadNullTerminatedString(pResult.Read<int>(i * 4), Encoding.UTF8));
+
+            pScript.Dispose();
+
+            foreach (var name in pVarNames)
+                name.Dispose();
+
+            pResult.Dispose();
+
+            var t = new T();
+            t.Parse(result.ToArray());
+
+            return t;
         }
 
-        public async Task<bool> UnitIsPlayerAsync(string unitMetaId) {
-            const int unitIsPlayer = 0x0060C4B0;
-            var buffer = m_buffer.Reserve(4);
-            var pMeta = stringToPtr(unitMetaId);
+        public async Task<string> RunScriptAsync(string luaScript, string retVariableName) {
+            const int runScript = 0x004DD490;
+            var pScript = stringToPtr(luaScript);
+            var pVarName = stringToPtr(retVariableName);
+            var ppRes = m_buffer.Reserve(4);
 
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pMeta)
-                                                            .CallLuaFunction(unitIsPlayer)
-                                                            .PopInteger(buffer)
+            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pScript)
+                                                            .CallLuaFunction(runScript)
+                                                            .GetText(ppRes.Start, pVarName.Start)
                                                             .CompileScript(m_assembler))
                             .ConfigureAwait(false);
 
-            var result = buffer.Read<int>(0);
-            pMeta.Dispose();
-            buffer.Dispose();
+            pScript.Dispose();
+            pVarName.Dispose();
+            var res = m_memory.ReadNullTerminatedString(ppRes.Read<int>(0), Encoding.UTF8);
+            ppRes.Dispose();
 
-            return result != 0;
+            return res;
+        }
+
+        public Task StartFollowUnitAsync(string unitMetaIdOrName) {
+            return RunScriptAsync($"FollowUnit({unitMetaIdOrName})");
         }
 
         public Task<bool> UnitIsConnectedAsync(string unitMetaId) {
-            throw new NotImplementedException();
+            return RunScriptAsync<LuaBoolean>($"UnitIsConnected({unitMetaId})", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         public Task<bool> UnitIsDeadOrGhostAsync(string unitMetaId) {
-            throw new NotImplementedException();
+            return RunScriptAsync<LuaBoolean>($"UnitIsDeadOrGhost({unitMetaId})", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
-        public Task<(int freeSlots, BagType bagType)> GetContainerNumFreeSlotsAsync(int containerId) {
-            throw new NotImplementedException();
-        }
-
-        private async Task<SpellInfo> getSpellInfoImplAsync(LuaVMWrapper withPushedArgument) {
-            const int getSpellInfo = 0x00540A30;
-            const int spellInfoSize = 48;
-
-            var spellInfo = m_buffer.Reserve(spellInfoSize);
-
-            var script = withPushedArgument.CallLuaFunction(getSpellInfo)
-                                           .PopStringPtr(spellInfo) // Name
-                                           .PopStringPtr(spellInfo) // Rank or secondary
-                                           .PopStringPtr(spellInfo) // Icon
-                                           .PopNumber(spellInfo)    // Cost
-                                           .PopInteger(spellInfo)   // IsFunnel
-                                           .PopInteger(spellInfo)   // Power type
-                                           .PopInteger(spellInfo)   // Cast time (milliseconds)
-                                           .PopNumber(spellInfo)    // Min range
-                                           .PopNumber(spellInfo)    // Max range
-                                           .CompileScript(m_assembler);
-
-            await m_executor.ExecuteAsync(script)
-                            .ConfigureAwait(false);
-
-            var result = new SpellInfo(spellInfo.Read<SpellInfoRaw>(0), m_memory);
-            spellInfo.Dispose();
-
-            return result;
-        }
-
-        private async Task<bool> runAndGetBool(int luaFunction) {
-            return await runAndGetInt(luaFunction)
-                       .ConfigureAwait(false) !=
-                   0;
-        }
-
-        private async Task<int> runAndGetInt(int luaFunction) {
-            var buffer = m_buffer.Reserve(4);
-
-            await m_executor.ExecuteAsync(new LuaVMWrapper().CallLuaFunction(luaFunction)
-                                                            .PopInteger(buffer)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
-
-            var result = buffer.Read<int>(0);
-            buffer.Dispose();
-
-            return result;
+        public Task<bool> UnitIsPlayerAsync(string unitMetaId) {
+            return RunScriptAsync<LuaBoolean>($"UnitIsPlayer({unitMetaId})", 1)
+                .Cast<bool, LuaBoolean>();
         }
 
         private IAutoManagedMemory stringToPtr(string value) {
