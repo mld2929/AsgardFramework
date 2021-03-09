@@ -43,7 +43,9 @@ namespace AsgardFramework.WoWAPI.Implementation
         private const int c_staticClientConnection = 0x00C79CE0;
 
         private readonly IAggregatedFunctions m_aggregatedFunctions;
+
         private readonly IGameFunctions m_functions;
+
         private readonly IGlobalMemory m_memory;
 
         private readonly int m_objListStart;
@@ -76,6 +78,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             return obj;
         }
 
+        // todo: rewrite
         public async Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields) {
             var data = getRawEnumerable()
                 .ToList();
@@ -118,9 +121,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             var result = m_memory.Read<Container>(data.Fields);
             var start = data.Fields + Marshal.SizeOf<Container>() - 8;
 
-            result.Items = m_memory.Read(start, start + result.Slots * 8)
-                                   .ToArrayOfUInt64()
-                                   .ToArray();
+            result.Items = m_memory.Read<ulong>(start, result.Slots);
 
             return result;
         }

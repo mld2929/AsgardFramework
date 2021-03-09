@@ -1,6 +1,4 @@
-﻿using AsgardFramework.CodeInject;
-using AsgardFramework.FasmManaged;
-using AsgardFramework.Memory;
+﻿using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -8,9 +6,8 @@ namespace AsgardFramework.WoWAPI.Implementation
     {
         #region Constructors
 
-        internal FunctionsAccessor(ICodeExecutor executor, IFasmAssembler assembler, IGlobalMemory memory) {
+        internal FunctionsAccessor(EndSceneHookExecutor executor, IGlobalMemory memory) {
             m_executor = executor;
-            m_assembler = assembler;
             m_memory = memory;
             m_buffer = m_memory.AllocateAutoScalingShared(c_dataBufferSize);
         }
@@ -19,13 +16,11 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #region Fields
 
-        private const int c_dataBufferSize = 0x800000; // 800 KB
-
-        private readonly IFasmAssembler m_assembler;
+        private const int c_dataBufferSize = 0x800000;
 
         private readonly IAutoManagedSharedBuffer m_buffer;
 
-        private readonly ICodeExecutor m_executor;
+        private readonly EndSceneHookExecutor m_executor;
 
         private readonly IGlobalMemory m_memory;
 

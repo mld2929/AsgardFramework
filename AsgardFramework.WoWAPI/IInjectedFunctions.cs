@@ -4,9 +4,13 @@ namespace AsgardFramework.WoWAPI
 {
     public interface IInjectedFunctions
     {
-        #region Methods
+        #region Properties
 
         bool AntiAFK { set; }
+
+        #endregion Properties
+
+        #region Methods
 
         void DisableWarden();
 

@@ -5,6 +5,7 @@ namespace AsgardFramework.WoWAPI.LuaData
     [Flags]
     public enum BagType
     {
+        Default = 0,
         Quiver = 0x0001,
         AmmoPouch = 0x2,
         SoulBag = 0x4,

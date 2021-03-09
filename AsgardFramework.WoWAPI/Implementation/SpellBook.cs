@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 
 using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -18,10 +17,7 @@ namespace AsgardFramework.WoWAPI.Implementation
         #region Methods
 
         public IEnumerable<int> GetSpells() {
-            var count = m_memory.Read<int>(c_spellCount);
-
-            return m_memory.Read(c_spellBook, count * 4)
-                           .ToArrayOfInt32();
+            return m_memory.Read<int>(c_spellBook, m_memory.Read<int>(c_spellCount));
         }
 
         #endregion Methods

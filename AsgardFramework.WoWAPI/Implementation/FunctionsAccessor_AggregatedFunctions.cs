@@ -18,6 +18,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
+        // todo: rewrite
         public async Task<IEnumerable<string>> GetNamesAsync(IEnumerable<int> objBases) {
             const int getNameOffset = 54 * 4;
             var count = objBases.Count();
@@ -39,9 +40,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                 current += 4;
             }
 
-            await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
-                                                     .ToCodeBlock())
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+            //.ToCodeBlock())
+            //.ConfigureAwait(false);
 
             var result = new List<string>(count);
             current = buffer.Start;
@@ -54,6 +55,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             return result;
         }
 
+        // todo: rewrite
         public async Task<IEnumerable<Position>> GetPositionsAsync(IEnumerable<int> objBases) {
             const int getPositionOffset = 12 * 4;
             var count = objBases.Count();
@@ -76,9 +78,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                 current += sizeof(float) * 4;
             }
 
-            await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
-                                                     .ToCodeBlock())
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+            //                                         .ToCodeBlock())
+            //                .ConfigureAwait(false);
 
             var result = new List<Position>(count);
             current = buffer.Start;

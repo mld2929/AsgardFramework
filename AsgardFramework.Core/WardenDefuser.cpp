@@ -2,13 +2,12 @@
 
 #include <TlHelp32.h>
 
-#include "Hook.h"
+#include "WardenDefuser.h"
 
 #include <cstdio>
 #include <vector>
 
 #include "Logger.h"
-
 
 #pragma pack(push, 1)
 
@@ -30,7 +29,6 @@ void waterwalk()
 	*patch = 0xCF811475;
 }
 
-
 static void __declspec(naked) __cdecl vpHook(const unsigned char* lpAddress, unsigned dwSize, unsigned flNewProtect)
 {
 	static void* from = nullptr;
@@ -51,7 +49,7 @@ static void __declspec(naked) __cdecl vpHook(const unsigned char* lpAddress, uns
 		}
 }
 
-void Hook::hookVirtualProtect()
+void WardenDefuser::hookVirtualProtect()
 {
 	auto* hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, GetCurrentProcessId());
 	MODULEENTRY32W me;
@@ -74,6 +72,6 @@ void Hook::hookVirtualProtect()
 	CloseHandle(hSnapshot);
 }
 
-void Hook::resetHookVirtualProtect()
+void WardenDefuser::resetHookVirtualProtect()
 {
 }

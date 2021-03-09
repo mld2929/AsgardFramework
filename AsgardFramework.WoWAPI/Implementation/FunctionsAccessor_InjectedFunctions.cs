@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.Memory;
-using AsgardFramework.WoWAPI.Utils;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {
@@ -16,25 +14,33 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         #endregion Fields
 
+        #region Properties
+
+        // todo: rewrite
+        public bool AntiAFK {
+            get;
+            set; //((EndSceneHookExecutor)m_executor).AntiAFK = value; // yeah type cast
+        }
+
+        #endregion Properties
+
         #region Methods
 
-        public bool AntiAFK {
-            set => ((EndSceneHookExecutor)m_executor).AntiAFK = value; // yeah type cast
-        }
-
+        // todo: rewrite
         public void DisableWarden() {
-            m_memory.LoadDll($"{AppDomain.CurrentDomain.BaseDirectory}/AsgardFramework.WardenDefuser.dll");
+            //m_memory.LoadDllAsync($"{AppDomain.CurrentDomain.BaseDirectory}/AsgardFramework.Core.dll");
         }
 
-        public Task StartExecuteScriptAtEachFrameAsync(string luaScript) {
+        // todo: rewrite
+        public async Task StartExecuteScriptAtEachFrameAsync(string luaScript) {
             const int runScript = 0x004DD490;
             var pScript = m_memory.Allocate(Encoding.UTF8.GetByteCount(luaScript) + 1);
             pScript.WriteNullTerminatedString(0, luaScript, Encoding.UTF8);
             m_gcSafe.Add(pScript);
 
-            return m_executor.StartExecutePermanentlyAsync(new LuaVMWrapper().PushStringPtr(pScript)
-                                                                             .CallLuaFunction(runScript)
-                                                                             .CompileScript(m_assembler));
+            //return m_executor.StartExecutePermanentlyAsync(new LuaVMWrapper().PushStringPtr(pScript)
+            //                                                                 .CallLuaFunction(runScript)
+            //                                                                 .CompileScript(m_assembler));
         }
 
         public void Teleport(int playerBase, float x, float y, float z) {

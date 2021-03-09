@@ -9,9 +9,7 @@ namespace AsgardFramework.Memory
     {
         #region Constructors
 
-        internal AutoManagedMemory(IntPtr address, SafeHandle processHandle, int size) : base(processHandle) {
-            handle = address;
-
+        internal AutoManagedMemory(IntPtr address, SafeHandle processHandle, int size) : base(processHandle, address) {
             if (IsInvalid)
                 throw new ArgumentException("Invalid address", nameof(address));
 
@@ -56,6 +54,14 @@ namespace AsgardFramework.Memory
         #endregion Indexers
 
         #region Methods
+
+        public void Fill<T>(T value) where T : new() {
+            var size = Marshal.SizeOf<T>();
+            var count = Size / size + (Size % size != 0 ? 1 : 0);
+            var array = new T[count];
+            Array.Fill(array, value);
+            Write(0, array);
+        }
 
         /// <summary>
         ///     Converts virtual offset to absolute

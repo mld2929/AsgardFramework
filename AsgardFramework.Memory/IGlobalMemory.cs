@@ -1,4 +1,6 @@
-﻿namespace AsgardFramework.Memory
+﻿using System.Threading.Tasks;
+
+namespace AsgardFramework.Memory
 {
     public interface IGlobalMemory : IMemory
     {
@@ -10,7 +12,9 @@
 
         IAutoManagedSharedBuffer AllocateShared(int size);
 
-        void LoadDll(string path);
+        IDll LoadDll(string fullPath, string dllName);
+
+        Task<IDll> LoadDllAsync(string fullPath, string dllName);
 
         #endregion Methods
     }

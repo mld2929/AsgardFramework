@@ -1,7 +1,7 @@
 #pragma once
-class Hook
+class WardenDefuser
 {
-	Hook() = default;
+	WardenDefuser() = default;
 public:
 	static void hookVirtualProtect();
 	static void resetHookVirtualProtect();

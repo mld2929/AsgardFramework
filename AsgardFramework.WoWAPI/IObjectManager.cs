@@ -11,7 +11,11 @@ namespace AsgardFramework.WoWAPI
 
         Item ContainerAsItem(Common container);
 
-        Task<ObjectData> GetObjectByGuidAsync(ulong guid);
+#nullable enable
+
+        Task<ObjectData?> GetObjectByGuidAsync(ulong guid);
+
+#nullable restore
 
         Task<IEnumerable<ObjectData>> GetObjectsAsync(bool setAllFields);
 

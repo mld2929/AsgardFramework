@@ -136,18 +136,20 @@ namespace AsgardFramework.WoWAPI.Implementation
             return RunScriptAsync($"LootSlot({slotNumberFromOne})");
         }
 
+        // todo: rewrite
         public async Task RunScriptAsync(string luaScript) {
             const int runScript = 0x004DD490;
             var pScript = stringToPtr(luaScript);
 
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pScript)
-                                                            .CallLuaFunction(runScript)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pScript)
+            //                                                .CallLuaFunction(runScript)
+            //                                                .CompileScript(m_assembler))
+            //.ConfigureAwait(false);
 
             pScript.Dispose();
         }
 
+        // todo: rewrite
         public async Task<T> RunScriptAsync<T>(string luaScript, int fieldsCount = 10) where T : LuaValue, new() {
             const int runScript = 0x004DD490;
             var sb = new StringBuilder();
@@ -174,8 +176,8 @@ namespace AsgardFramework.WoWAPI.Implementation
                                .Start);
             }
 
-            await m_executor.ExecuteAsync(vm.CompileScript(m_assembler))
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(vm.CompileScript(m_assembler))
+            //                .ConfigureAwait(false);
 
             var result = new List<string>(fieldsCount);
 
@@ -195,17 +197,18 @@ namespace AsgardFramework.WoWAPI.Implementation
             return t;
         }
 
+        // todo: rewrite
         public async Task<string> RunScriptAsync(string luaScript, string retVariableName) {
             const int runScript = 0x004DD490;
             var pScript = stringToPtr(luaScript);
             var pVarName = stringToPtr(retVariableName);
             var ppRes = m_buffer.Reserve(4);
 
-            await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pScript)
-                                                            .CallLuaFunction(runScript)
-                                                            .GetText(ppRes.Start, pVarName.Start)
-                                                            .CompileScript(m_assembler))
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(new LuaVMWrapper().PushStringPtr(pScript)
+            //                                                .CallLuaFunction(runScript)
+            //                                                .GetText(ppRes.Start, pVarName.Start)
+            //                                                .CompileScript(m_assembler))
+            //                .ConfigureAwait(false);
 
             pScript.Dispose();
             pVarName.Dispose();

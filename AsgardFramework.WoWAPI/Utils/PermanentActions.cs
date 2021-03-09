@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
-using AsgardFramework.CodeInject;
-using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Utils
-{
+{ // todo: rewrite
     internal class PermanentActions
     {
         #region Constructors
 
-        internal PermanentActions(IAutoScalingSharedBuffer buffer, ICodeInjector injector, IFasmAssembler assembler) {
+        internal PermanentActions(IAutoScalingSharedBuffer buffer) {
             m_buffer = buffer;
-            m_injector = injector;
             m_callListSize = m_buffer.Size;
-            m_assembler = assembler;
-            addNewCallListIfNeeded();
+            //addNewCallListIfNeeded();
         }
 
         #endregion Constructors
@@ -36,15 +30,11 @@ namespace AsgardFramework.WoWAPI.Utils
 
         private static readonly byte c_ret = 0xC3;
 
-        private readonly IFasmAssembler m_assembler;
-
         private readonly IAutoScalingSharedBuffer m_buffer;
 
         private readonly List<IAutoManagedMemory> m_callLists = new List<IAutoManagedMemory>();
 
         private readonly int m_callListSize;
-
-        private readonly ICodeInjector m_injector;
 
         private int m_actionsLeft;
 
@@ -52,49 +42,45 @@ namespace AsgardFramework.WoWAPI.Utils
 
         #endregion Fields
 
-        #region Methods
+        //internal void Add(ICodeBlock code) {
+        //    addNewCallListIfNeeded();
+        //    var list = m_callLists.Last();
 
-        internal void Add(ICodeBlock code) {
-            addNewCallListIfNeeded();
-            var list = m_callLists.Last();
+        //    if (!m_buffer.TryReserve(code.Compiled.Length, out var buffer))
+        //        throw new InvalidOperationException("Can't reserve memory");
 
-            if (!m_buffer.TryReserve(code.Compiled.Length, out var buffer))
-                throw new InvalidOperationException("Can't reserve memory");
+        //    m_injector.Inject(buffer, code, 0);
+        //    var call = getCall(buffer.Start);
+        //    m_injector.InjectWithoutRet(list, call, m_currentOffset);
+        //    m_actionsLeft--;
+        //    m_currentOffset += call.Compiled.Length;
+        //}
 
-            m_injector.Inject(buffer, code, 0);
-            var call = getCall(buffer.Start);
-            m_injector.InjectWithoutRet(list, call, m_currentOffset);
-            m_actionsLeft--;
-            m_currentOffset += call.Compiled.Length;
-        }
+        //private void addNewCallListIfNeeded() {
+        //    if (m_actionsLeft != 0)
+        //        return;
 
-        private void addNewCallListIfNeeded() {
-            if (m_actionsLeft != 0)
-                return;
+        //    var reserved = m_buffer.Reserve(m_callListSize);
 
-            var reserved = m_buffer.Reserve(m_callListSize);
+        //    m_actionsLeft = reserved.Size / 7 - 2; // 1 byte for ret, 7 bytes for new list call
+        //    var bytes = new byte[reserved.Size];
+        //    Array.Fill(bytes, c_nop);
+        //    reserved[..] = bytes;
 
-            m_actionsLeft = reserved.Size / 7 - 2; // 1 byte for ret, 7 bytes for new list call
-            var bytes = new byte[reserved.Size];
-            Array.Fill(bytes, c_nop);
-            reserved[..] = bytes;
+        //    reserved[^1] = c_ret;
 
-            reserved[^1] = c_ret;
+        //    if (m_callLists.LastOrDefault() is IAutoManagedMemory list) {
+        //        var call = getCall(reserved.Start);
+        //        m_injector.InjectWithoutRet(list, call, m_currentOffset);
+        //    }
 
-            if (m_callLists.LastOrDefault() is IAutoManagedMemory list) {
-                var call = getCall(reserved.Start);
-                m_injector.InjectWithoutRet(list, call, m_currentOffset);
-            }
+        //    m_currentOffset = 0;
+        //    m_callLists.Add(reserved);
+        //}
 
-            m_currentOffset = 0;
-            m_callLists.Add(reserved);
-        }
-
-        private ICodeBlock getCall(int to) {
-            return m_assembler.Assemble(to.CallViaEax())
-                              .ToCodeBlock();
-        }
-
-        #endregion Methods
+        //private ICodeBlock getCall(int to) {
+        //    return m_assembler.Assemble(to.CallViaEax())
+        //                      .ToCodeBlock();
+        //}
     }
 }

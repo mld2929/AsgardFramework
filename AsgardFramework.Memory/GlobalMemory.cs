@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Text;
-
-using AsgardFramework.DllWrapper;
+using System.Threading.Tasks;
 
 namespace AsgardFramework.Memory
 {
     public sealed class GlobalMemory : KernelDrivenMemoryBase, IGlobalMemory
     {
-        private readonly int m_procId;
-
         #region Constructors
 
-        public GlobalMemory(int processId) : base(Kernel.OpenProcess(Kernel.c_allAccess, true, processId)) {
+        public GlobalMemory(int processId) : base(Kernel.OpenProcess(Kernel.c_allAccess, true, processId), IntPtr.Zero) {
             m_procId = processId;
+            m_procKernel = DllWrapper.GetKernel(m_procId, m_processHandle, AllocateAutoScalingShared(4096));
         }
 
         #endregion Constructors
@@ -22,6 +20,13 @@ namespace AsgardFramework.Memory
         public override bool IsInvalid => m_processHandle.IsInvalid;
 
         #endregion Properties
+
+        #region Fields
+
+        private readonly int m_procId;
+        private readonly DllWrapper m_procKernel;
+
+        #endregion Fields
 
         #region Methods
 
@@ -42,32 +47,33 @@ namespace AsgardFramework.Memory
 
             minSize = calculateSize(minSize);
 
-            var memory = new AutoScalingSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, minSize), m_processHandle, minSize, AllocateShared);
+            var memory = new AutoScalingSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, minSize), m_processHandle, minSize, allocateAutoManagedSharedBuffer);
             addWeakHandlerFor(memory);
 
             return memory;
         }
 
         public IAutoManagedSharedBuffer AllocateShared(int size) {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(GlobalMemory));
-
-            size = calculateSize(size);
-
-            var memory = new AutoManagedSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, size), m_processHandle, size);
-            addWeakHandlerFor(memory);
-
-            return memory;
+            return allocateAutoManagedSharedBuffer(size);
         }
 
-        public void LoadDll(string path) {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(GlobalMemory));
+        public IDll LoadDll(string fullPath, string dllName) {
+            m_procKernel["LoadLibraryW", true, Encoding.Unicode](fullPath);
 
-            var loadLibrary = new DllObserver(m_procId, "Kernel32.dll")["LoadLibraryW"];
-            var buffer = Allocate(1024);
-            buffer.WriteNullTerminatedString(0, path, Encoding.Unicode);
-            Kernel.CreateRemoteThread(m_processHandle, 0, 0, loadLibrary, buffer.Start, 0, out _);
+            var dll = new DllWrapper(dllName, m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
+            addWeakHandlerFor(dll);
+
+            return dll;
+        }
+
+        public async Task<IDll> LoadDllAsync(string fullPath, string dllName) {
+            await m_procKernel["LoadLibraryW", true, Encoding.Unicode, fullPath]
+                .ConfigureAwait(false);
+
+            var dll = new DllWrapper(dllName, m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
+            addWeakHandlerFor(dll);
+
+            return dll;
         }
 
         protected override bool ReleaseHandle() {
@@ -83,13 +89,32 @@ namespace AsgardFramework.Memory
             return requested;
         }
 
-        private void addWeakHandlerFor(IAutoManagedMemory memory) {
-            var weak = new WeakReference<IAutoManagedMemory>(memory);
+        private void addWeakHandlerFor(IDisposable memory) {
+            var weak = new WeakReference<IDisposable>(memory);
 
             Disposing += (_, __) => {
-                if (weak.TryGetTarget(out var mem) && !mem.Disposed)
-                    mem.Dispose();
+                if (!weak.TryGetTarget(out var disp))
+                    return;
+
+                if (disp is IAutoManagedMemory {
+                    Disposed: true
+                })
+                    return;
+
+                disp.Dispose();
             };
+        }
+
+        private AutoManagedSharedBuffer allocateAutoManagedSharedBuffer(int size) {
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(GlobalMemory));
+
+            size = calculateSize(size);
+
+            var memory = new AutoManagedSharedBuffer(Kernel.VirtualAllocEx(m_processHandle, IntPtr.Zero, size), m_processHandle, size);
+            addWeakHandlerFor(memory);
+
+            return memory;
         }
 
         #endregion Methods

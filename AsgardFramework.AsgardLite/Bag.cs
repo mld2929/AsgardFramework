@@ -22,9 +22,13 @@ namespace AsgardFramework.AsgardLite
         #region Fields
 
         public readonly int FreeSlots;
+
         public readonly IReadOnlyList<Item> Items;
+
         public readonly string Name;
+
         public readonly int TotalSlots;
+
         public readonly BagType Type;
 
         #endregion Fields

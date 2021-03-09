@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -10,14 +11,15 @@ namespace AsgardFramework.Memory
     {
         #region Fields
 
-        protected SafeHandle m_processHandle;
+        protected internal SafeHandle m_processHandle;
 
         #endregion Fields
 
         #region Constructors
 
-        protected KernelDrivenMemoryBase(SafeHandle processHandle) : base(IntPtr.Zero, true) {
+        protected KernelDrivenMemoryBase(SafeHandle processHandle, IntPtr handle) : base(IntPtr.Zero, true) {
             m_processHandle = processHandle;
+            SetHandle(handle);
 
             if (m_processHandle.IsInvalid)
                 throw new ArgumentException("Handle is invalid", nameof(processHandle));
@@ -47,6 +49,10 @@ namespace AsgardFramework.Memory
 
         #region Methods
 
+        public SafeHandle GetHandle() {
+            return this;
+        }
+
         public byte Read(int offset) {
             return Read(offset, 1)[0];
         }
@@ -68,6 +74,21 @@ namespace AsgardFramework.Memory
             unsafe {
                 fixed (byte* buffer = Read(offset, Marshal.SizeOf<T>())) {
                     return Marshal.PtrToStructure<T>((IntPtr)buffer);
+                }
+            }
+        }
+
+        public T[] Read<T>(int offset, int count) where T : new() {
+            var size = Marshal.SizeOf<T>();
+
+            unsafe {
+                fixed (byte* buffer = Read(offset, size * count)) {
+                    var result = new T[count];
+
+                    for (var i = 0; i < count; i++)
+                        result[i] = Unsafe.AsRef<T>(buffer + i * size);
+
+                    return result;
                 }
             }
         }
@@ -254,6 +275,20 @@ namespace AsgardFramework.Memory
             unsafe {
                 fixed (byte* buffer = bytes) {
                     Marshal.StructureToPtr(data, (IntPtr)buffer, true);
+                }
+            }
+
+            Write(offset, bytes);
+        }
+
+        public void Write<T>(int offset, T[] data) where T : new() {
+            var size = Marshal.SizeOf<T>();
+            var bytes = new byte[size * data.Length];
+
+            unsafe {
+                fixed (byte* buffer = bytes) {
+                    for (var i = 0; i < data.Length; i++)
+                        Unsafe.As<byte, T>(ref buffer[i * size]) = data[i];
                 }
             }
 

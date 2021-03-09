@@ -45,6 +45,18 @@ namespace AsgardFramework.WoWAPI.LuaData
         #endregion Methods
     }
 
+    public sealed class LuaEnum<T> : LuaValue<T> where T : Enum
+    {
+        #region Methods
+
+        protected override T ParseData(string[] data) {
+            return data[0]
+                .ToEnum<T>();
+        }
+
+        #endregion Methods
+    }
+
     public sealed class LuaNumber : LuaValue<double>
     {
         #region Methods

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,16 +13,22 @@ namespace AsgardFramework.AsgardLite
     {
         #region Constructors
 
-        protected BotBase(IGameWrapper game, BagType? required = null) {
+        protected BotBase(IGameWrapper game, BagType? required = null, Dictionary<BotConditions, Func<Task<bool>>> settings = null) {
             m_game = game;
             m_player = new Player(game);
             m_requiredBagType = required;
-            m_settings.Add(BotConditions.Normal, async () => true);
+            m_settings = settings ?? DefaultSettings;
         }
 
         #endregion Constructors
 
         #region Fields
+
+        protected static readonly Dictionary<BotConditions, Func<Task<bool>>> DefaultSettings = Enum.GetValues(typeof(BotConditions))
+                                                                                                    .Cast<BotConditions>()
+                                                                                                    .ToDictionary(condition => condition,
+                                                                                                                  condition => condition == BotConditions.Normal ?
+                                                                                                                                   new Func<Task<bool>>(async () => true) : async () => false);
 
         protected readonly IGameWrapper m_game;
 
@@ -29,7 +36,7 @@ namespace AsgardFramework.AsgardLite
 
         protected readonly BagType? m_requiredBagType;
 
-        protected readonly Dictionary<BotConditions, Func<Task<bool>>> m_settings = new Dictionary<BotConditions, Func<Task<bool>>>();
+        protected readonly Dictionary<BotConditions, Func<Task<bool>>> m_settings;
 
         protected volatile Task m_conditions = Task.CompletedTask;
 
@@ -38,6 +45,9 @@ namespace AsgardFramework.AsgardLite
         #region Methods
 
         public async Task Run(CancellationToken token) {
+            await iniIfNeededAsync()
+                .ConfigureAwait(false);
+
             conditionsWatcher(token);
 
             while (!token.IsCancellationRequested)
@@ -78,6 +88,8 @@ namespace AsgardFramework.AsgardLite
 
             return BotConditions.Normal;
         }
+
+        protected virtual async Task iniIfNeededAsync() { }
 
         protected abstract Task normalActions(CancellationToken token);
 

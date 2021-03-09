@@ -5,14 +5,6 @@ namespace AsgardFramework.Memory
 {
     public interface IAutoManagedMemory : IMemory
     {
-        #region Methods
-
-        public static int operator+(IAutoManagedMemory memory, int offset) {
-            return memory.Start + offset;
-        }
-
-        #endregion Methods
-
         #region Properties
 
         int Size { get; }
@@ -28,5 +20,15 @@ namespace AsgardFramework.Memory
         byte this[Index index] { get; set; }
 
         #endregion Indexers
+
+        #region Methods
+
+        public static int operator+(IAutoManagedMemory memory, int offset) {
+            return memory.Start + offset;
+        }
+
+        void Fill<T>(T value) where T : new();
+
+        #endregion Methods
     }
 }

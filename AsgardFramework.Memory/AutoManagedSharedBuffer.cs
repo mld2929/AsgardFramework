@@ -35,9 +35,13 @@ namespace AsgardFramework.Memory
             return reserved;
         }
 
-        public virtual bool TryReserve(int size, out IAutoManagedMemory reserved) {
-            reserved = null;
+        public bool TryReserve(int size, out IAutoManagedMemory reserved) {
+            reserved = reserveBlock(size);
 
+            return reserved != null;
+        }
+
+        protected internal virtual SharedBlock reserveBlock(int size) {
             lock (m_lock) {
                 var min = m_blocks.Where(b => !b.Reserved && b.Size >= size)
                                   .Min();
@@ -50,7 +54,7 @@ namespace AsgardFramework.Memory
                 }
 
                 if (min == null)
-                    return false;
+                    return null;
 
                 if (min.Size - size != 0) {
                     var (left, right) = min.Split(size);
@@ -61,10 +65,8 @@ namespace AsgardFramework.Memory
                     min = left;
                 }
 
-                reserved = new SharedBlock(min, m_processHandle);
+                return new SharedBlock(min, m_processHandle);
             }
-
-            return reserved != null;
         }
 
         private void mergeBlocks() {
@@ -91,7 +93,7 @@ namespace AsgardFramework.Memory
     {
         #region Fields
 
-        private readonly SharedBlockData m_data;
+        protected internal readonly SharedBlockData m_data;
 
         #endregion Fields
 

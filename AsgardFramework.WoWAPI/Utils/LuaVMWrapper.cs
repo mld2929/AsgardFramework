@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 
-using AsgardFramework.CodeInject;
-using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Utils
-{
+{ // todo: rewrite
     internal class LuaVMWrapper
     {
         #region Fields
@@ -33,19 +31,19 @@ namespace AsgardFramework.WoWAPI.Utils
             return this;
         }
 
-        internal ICodeBlock CompileScript(IFasmAssembler assembler) {
-            const int setTop = 0x0084DBF0;
-            moveStateToEax();
-            m_script.Add("push 0");
-            m_script.Add("push eax");
-            m_script.Add(setTop.CallViaEax());
-            m_script.Add("add esp, 12");
-            var bytes = assembler.Assemble(m_script);
-            m_script.Clear();
-            saveLuaStateOnStack();
+        //internal ICodeBlock CompileScript(IFasmAssembler assembler) {
+        //    const int setTop = 0x0084DBF0;
+        //    moveStateToEax();
+        //    m_script.Add("push 0");
+        //    m_script.Add("push eax");
+        //    m_script.Add(setTop.CallViaEax());
+        //    m_script.Add("add esp, 12");
+        //    var bytes = assembler.Assemble(m_script);
+        //    m_script.Clear();
+        //    saveLuaStateOnStack();
 
-            return bytes.ToCodeBlock();
-        }
+        //    return bytes.ToCodeBlock();
+        //}
 
         internal LuaVMWrapper GetText(int pBuffer, int pVar) {
             const int getText = 0x00819D40;

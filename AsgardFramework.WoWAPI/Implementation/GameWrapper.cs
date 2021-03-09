@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-using AsgardFramework.CodeInject;
-using AsgardFramework.FasmManaged;
 using AsgardFramework.Memory;
 
 namespace AsgardFramework.WoWAPI.Implementation
@@ -17,13 +15,10 @@ namespace AsgardFramework.WoWAPI.Implementation
         private GameWrapper(Process game) {
             ID = game.Id;
             m_memory = new Lazy<IGlobalMemory>(() => new GlobalMemory(game.Id));
-            var assembler = new Lazy<FasmAssembler>();
-            var injector = new Lazy<DefaultCodeInjector>();
-            var observer = new Lazy<DeviceObserver>(() => new DeviceObserver(m_memory.Value));
 
-            var hook = new Lazy<EndSceneHookExecutor>(() => new EndSceneHookExecutor(injector.Value, m_memory.Value, observer.Value, assembler.Value));
+            var hook = new Lazy<EndSceneHookExecutor>(() => new EndSceneHookExecutor(m_memory.Value));
 
-            m_functions = new Lazy<FunctionsAccessor>(() => new FunctionsAccessor(hook.Value, assembler.Value, m_memory.Value));
+            m_functions = new Lazy<FunctionsAccessor>(() => new FunctionsAccessor(hook.Value, m_memory.Value));
 
             m_objectManager = new Lazy<IObjectManager>(() => new ObjectManager(m_memory.Value, m_functions.Value, m_functions.Value));
             m_spellBook = new Lazy<ISpellBook>(() => new SpellBook(m_memory.Value));

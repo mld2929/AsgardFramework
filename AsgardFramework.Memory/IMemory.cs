@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace AsgardFramework.Memory
@@ -19,11 +20,15 @@ namespace AsgardFramework.Memory
 
         #region Methods
 
+        SafeHandle GetHandle();
+
         byte Read(int offset);
 
         byte[] Read(int offset, int count);
 
         T Read<T>(int offset) where T : new();
+
+        T[] Read<T>(int offset, int count) where T : new();
 
         string ReadNullTerminatedString(int offset, Encoding encoding);
 
@@ -32,6 +37,8 @@ namespace AsgardFramework.Memory
         void Write(int offset, byte[] data);
 
         void Write<T>(int offset, T data) where T : new();
+
+        void Write<T>(int offset, T[] data) where T : new();
 
         void WriteNullTerminatedString(int offset, string data, Encoding encoding);
 

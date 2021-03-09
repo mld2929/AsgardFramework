@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 
 using AsgardFramework.WoWAPI.Objects;
@@ -15,7 +14,8 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
-        public Task CastSpellAsync(int spellId, ulong target) {
+        // todo: rewrite
+        public async Task CastSpellAsync(int spellId, ulong target) {
             const int castSpell = 0x0080DA40;
 
             var asm = new[] {
@@ -27,8 +27,8 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "add esp, 0x20"
             };
 
-            return m_executor.ExecuteAsync(m_assembler.Assemble(asm)
-                                                      .ToCodeBlock());
+            //return m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+            //                                          .ToCodeBlock());
         }
 
         public Task ClickToMoveAsync(float x,
@@ -48,6 +48,7 @@ namespace AsgardFramework.WoWAPI.Implementation
             throw new NotImplementedException();
         }
 
+        // todo: rewrite
         public async Task<string> GetNameAsync(int objBase) {
             const int getNameOffset = 54 * 4;
             var getName = m_memory.Read<int>(m_memory.Read<int>(objBase) + getNameOffset);
@@ -58,15 +59,18 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "call eax"
             };
 
-            return m_memory.ReadNullTerminatedString(await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
-                                                                                              .ToCodeBlock())
-                                                                     .ConfigureAwait(false), Encoding.UTF8);
+            return null;
+
+            //return m_memory.ReadNullTerminatedString(await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+            //                                                                                  .ToCodeBlock())
+            //                                                         .ConfigureAwait(false), Encoding.UTF8);
         }
 
         public Task<string> GetPlayerNameAsync() {
             throw new NotImplementedException();
         }
 
+        // todo: rewrite
         public async Task<Position> GetPositionAsync(int objBase) {
             const int getPositionOffset = 12 * 4;
             const int size = sizeof(float) * 4;
@@ -81,9 +85,9 @@ namespace AsgardFramework.WoWAPI.Implementation
                 "call eax"
             };
 
-            await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
-                                                     .ToCodeBlock())
-                            .ConfigureAwait(false);
+            //await m_executor.ExecuteAsync(m_assembler.Assemble(asm)
+            //                                         .ToCodeBlock())
+            //                .ConfigureAwait(false);
 
             var result = m_memory.Read<Position>(buffer.Start);
             buffer.Dispose();

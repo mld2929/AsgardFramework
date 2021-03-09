@@ -13,8 +13,4 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\AsgardFramework.DllWrapper\AsgardFramework.DllWrapper.csproj" />
-  </ItemGroup>
-
 </Project>
