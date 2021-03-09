@@ -12,9 +12,11 @@ namespace AsgardFramework.Memory
 
         IAutoManagedSharedBuffer AllocateShared(int size);
 
-        IDll LoadDll(string fullPath, string dllName);
+        IMainThreadExecutor GetMainThreadExecutor();
 
-        Task<IDll> LoadDllAsync(string fullPath, string dllName);
+        IDll LoadDll(string path);
+
+        Task<IDll> LoadDllAsync(string path);
 
         #endregion Methods
     }

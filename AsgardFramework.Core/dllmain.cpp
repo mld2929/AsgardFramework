@@ -4,16 +4,21 @@
 
 static const EndSceneHook hook;
 
-int InitInteraction(func_init_data** functions, int functionsCount, func_call_data* queue)
+int InitInteraction(func_call_data* queue)
 {
 	EndSceneHook::queue = queue;
+	
+	return reinterpret_cast<int>(EndSceneHook::executionEvent);
+}
+
+void RegisterFunctions(func_init_data** functions, int functionsCount)
+{
 	std::vector<func_init_data> funcsVector;
 	for (auto i = 0; i < functionsCount; i++)
 	{
 		funcsVector.push_back(*functions[i]);
 	}
 	EndSceneHook::loadFunctions(funcsVector);
-	return reinterpret_cast<int>(EndSceneHook::executionEvent);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule,

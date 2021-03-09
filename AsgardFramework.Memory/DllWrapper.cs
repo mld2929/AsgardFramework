@@ -14,6 +14,7 @@ namespace AsgardFramework.Memory
 
         // this is x86 assembly code, it allows to push any arguments to callee (encoded in UTF16-LE)
         private const string c_unwrapper = "ﾉ襕菥ࣅ疋謀ࡎ೫䚋謌蠄䖉＀u礁華Ѿ琀）褖ࡆ쉝\0䚋섈ˠ䖉＀褖ࡆ攃崀Â";
+
         private readonly IAutoScalingSharedBuffer m_buffer;
         private readonly object m_cacheLock = new object();
         private readonly DllWrapper m_kernel;

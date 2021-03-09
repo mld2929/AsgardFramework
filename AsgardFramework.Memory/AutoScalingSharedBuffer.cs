@@ -64,6 +64,11 @@ namespace AsgardFramework.Memory
 
                 foreach (var obj in _data)
                     switch (obj) {
+                        case null:
+                            calculated += 4;
+
+                            break;
+
                         case IntPtr ptr:
                             calculated += 4;
 
@@ -116,6 +121,12 @@ namespace AsgardFramework.Memory
             int writeObjectsRecursively(IEnumerable<object> _data, AutoManagedStructure buffer, int offset) {
                 foreach (var obj in _data)
                     switch (obj) {
+                        case null:
+                            buffer.Write(offset, 0);
+                            offset += 4;
+
+                            break;
+
                         case Enum en:
                             buffer.Write(offset, (int)Enum.ToObject(en.GetType(), en));
                             offset += 4;

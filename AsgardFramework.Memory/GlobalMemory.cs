@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,8 +24,13 @@ namespace AsgardFramework.Memory
 
         #region Fields
 
+        private const string c_executorCore = "AsgardFramework.Core.dll";
+
         private readonly int m_procId;
+
         private readonly DllWrapper m_procKernel;
+
+        private IMainThreadExecutor m_mainThreadExecutor;
 
         #endregion Fields
 
@@ -57,20 +63,34 @@ namespace AsgardFramework.Memory
             return allocateAutoManagedSharedBuffer(size);
         }
 
-        public IDll LoadDll(string fullPath, string dllName) {
+        public IMainThreadExecutor GetMainThreadExecutor() {
+            return m_mainThreadExecutor ??= new EndSceneHookExecutor(Allocate(0x80000), LoadDll(c_executorCore));
+        }
+
+        public IDll LoadDll(string path) {
+            var fullPath = Path.GetFullPath(path);
+
+            if (fullPath == null || !File.Exists(fullPath))
+                throw new DllNotFoundException(path);
+
             m_procKernel["LoadLibraryW", true, Encoding.Unicode](fullPath);
 
-            var dll = new DllWrapper(dllName, m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
+            var dll = new DllWrapper(Path.GetFileName(path), m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
             addWeakHandlerFor(dll);
 
             return dll;
         }
 
-        public async Task<IDll> LoadDllAsync(string fullPath, string dllName) {
+        public async Task<IDll> LoadDllAsync(string path) {
+            var fullPath = Path.GetFullPath(path);
+
+            if (fullPath == null || !File.Exists(fullPath))
+                throw new DllNotFoundException(path);
+
             await m_procKernel["LoadLibraryW", true, Encoding.Unicode, fullPath]
                 .ConfigureAwait(false);
 
-            var dll = new DllWrapper(dllName, m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
+            var dll = new DllWrapper(Path.GetFileName(path), m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
             addWeakHandlerFor(dll);
 
             return dll;

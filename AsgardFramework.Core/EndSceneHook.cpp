@@ -67,6 +67,7 @@ static __declspec(naked) void hook()
 		}
 }
 
+// todo: find EndScene via DirectX
 EndSceneHook::EndSceneHook()
 {
 	executionEvent = CreateEventW(nullptr, true, true, nullptr);
