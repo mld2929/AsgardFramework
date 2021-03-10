@@ -6,9 +6,10 @@ namespace AsgardFramework.WoWAPI.Implementation
     {
         #region Constructors
 
-        internal FunctionsAccessor(EndSceneHookExecutor executor, IGlobalMemory memory) {
+        internal FunctionsAccessor(IMainThreadExecutor executor, IGlobalMemory memory, ILuaScriptExecutor scriptExecutor) {
             m_executor = executor;
             m_memory = memory;
+            m_luaExecutor = scriptExecutor;
             m_buffer = m_memory.AllocateAutoScalingShared(c_dataBufferSize);
         }
 
@@ -20,7 +21,9 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private readonly IAutoManagedSharedBuffer m_buffer;
 
-        private readonly EndSceneHookExecutor m_executor;
+        private readonly IMainThreadExecutor m_executor;
+
+        private readonly ILuaScriptExecutor m_luaExecutor;
 
         private readonly IGlobalMemory m_memory;
 

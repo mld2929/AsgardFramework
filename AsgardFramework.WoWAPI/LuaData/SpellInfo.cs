@@ -15,7 +15,7 @@
     {
         #region Methods
 
-        public override void Parse(string[] data) {
+        public override LuaValue Parse(string[] data) {
             Name = data[0];
             RankOrSecondaryText = data[1];
             Icon = data[2];
@@ -37,6 +37,8 @@
 
             MaxRange = data[8]
                 .ToDouble();
+
+            return this;
         }
 
         #endregion Methods

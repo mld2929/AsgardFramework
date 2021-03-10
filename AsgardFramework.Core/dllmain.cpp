@@ -4,11 +4,11 @@
 
 static const EndSceneHook hook;
 
-int InitInteraction(func_call_data* queue)
+HANDLE InitInteraction(func_call_data** queue)
 {
 	EndSceneHook::queue = queue;
-	
-	return reinterpret_cast<int>(EndSceneHook::executionEvent);
+
+	return EndSceneHook::executionEvent;
 }
 
 void RegisterFunctions(func_init_data** functions, int functionsCount)
@@ -34,7 +34,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
-		Logger::release();
 		break;
 	}
 	return TRUE;

@@ -43,11 +43,11 @@ namespace AsgardFramework.AsgardLite
         #region Methods
 
         public Task CastSpellAsync(string name, UnitMetaId target = null) {
-            return m_game.GameAPIFunctions.RunScriptAsync($"CastSpellByName({name}" + (target != null ? $", {target})" : ")"));
+            return m_game.LuaExecutor.RunScriptAsync($"CastSpellByName({name}" + (target != null ? $", {target})" : ")"));
         }
 
         public Task CastSpellAsync(int id, UnitMetaId target = null) {
-            return m_game.GameAPIFunctions.RunScriptAsync($"CastSpellByID({id.ToString(CultureInfo.InvariantCulture)}" + (target != null ? $", {target})" : ")"));
+            return m_game.LuaExecutor.RunScriptAsync($"CastSpellByID({id.ToString(CultureInfo.InvariantCulture)}" + (target != null ? $", {target})" : ")"));
         }
 
         public async Task<int> GetFreeSlotsFor(BagType type) {
@@ -68,7 +68,7 @@ namespace AsgardFramework.AsgardLite
         }
 
         public Task StopAttackAsync() {
-            return m_game.GameAPIFunctions.RunScriptAsync("StopAttack()");
+            return m_game.LuaExecutor.RunScriptAsync("StopAttack()");
         }
 
         public Task StopMovingAsync() {

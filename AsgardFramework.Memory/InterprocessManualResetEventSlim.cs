@@ -13,11 +13,13 @@ namespace AsgardFramework.Memory
         #region Methods
 
         public void ResetEvent() {
-            Kernel.ResetEvent(handle);
+            if (!Kernel.ResetEvent(handle))
+                throw new InvalidOperationException($"Can't reset event (error: 0x{Kernel.GetLastError():X}");
         }
 
         public void SetEvent() {
-            Kernel.SetEvent(handle);
+            if (!Kernel.SetEvent(handle))
+                throw new InvalidOperationException($"Can't set event (error: 0x{Kernel.GetLastError():X}");
         }
 
         #endregion Methods

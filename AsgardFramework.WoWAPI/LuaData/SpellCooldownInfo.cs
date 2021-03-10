@@ -4,7 +4,7 @@
     {
         #region Methods
 
-        public override void Parse(string[] data) {
+        public override LuaValue Parse(string[] data) {
             Start = data[0]
                 .ToDouble();
 
@@ -13,6 +13,8 @@
 
             CooldownVisibleAtUI = data[2]
                 .ToBool();
+
+            return this;
         }
 
         #endregion Methods

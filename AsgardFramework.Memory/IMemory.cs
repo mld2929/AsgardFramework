@@ -40,6 +40,8 @@ namespace AsgardFramework.Memory
 
         void Write<T>(int offset, T[] data) where T : new();
 
+        void Write(int offset, IAutoManagedMemory pointer);
+
         void WriteNullTerminatedString(int offset, string data, Encoding encoding);
 
         #endregion Methods

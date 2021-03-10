@@ -1,8 +1,9 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 
 namespace AsgardFramework.Memory
 {
-    public enum WriteType
+    public enum WideFieldsWriteType
     {
         ByVal,
         Pointer
@@ -18,7 +19,7 @@ namespace AsgardFramework.Memory
 
         IAutoManagedMemory WriteString(string value, Encoding encoding);
 
-        IAutoManagedMemory WriteStruct(object[] data, WriteType forWideFields, Encoding forStrings, int padding = 1);
+        IAutoManagedMemory WriteStruct(IEnumerable<object> data, WideFieldsWriteType forWideFields = WideFieldsWriteType.ByVal, Encoding forStrings = default, int padding = 1);
 
         #endregion Methods
     }

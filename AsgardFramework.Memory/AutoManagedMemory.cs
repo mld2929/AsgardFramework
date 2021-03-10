@@ -11,7 +11,7 @@ namespace AsgardFramework.Memory
 
         internal AutoManagedMemory(IntPtr address, SafeHandle processHandle, int size) : base(processHandle, address) {
             if (IsInvalid)
-                throw new ArgumentException("Invalid address", nameof(address));
+                throw new ArgumentException($"Invalid address of unmanaged memory (Error: 0x{Kernel.GetLastError():X})", nameof(address));
 
             Size = size;
         }

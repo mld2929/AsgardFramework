@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
 
 using Microsoft.Win32.SafeHandles;
@@ -14,6 +13,9 @@ namespace AsgardFramework.Memory
 
         public SafeWaitHandleSlim(IntPtr handle, bool ownsHandle) : base(ownsHandle) {
             SetHandle(handle);
+
+            if (IsInvalid)
+                throw new ArgumentException("Invalid handle");
         }
 
         #endregion Constructors
@@ -21,19 +23,8 @@ namespace AsgardFramework.Memory
         #region Methods
 
         public async Task WaitForSignalAsync() {
-            try {
-                while (!WaitForSingleObject(0))
-                    await Task.Yield();
-            } catch (Exception ex) {
-                File.AppendAllLines("exception.txt", new[] {
-                    $"0x{ex.HResult:X}",
-                    ex.Message ?? string.Empty,
-                    ex.Source ?? string.Empty,
-                    ex.StackTrace ?? string.Empty
-                });
-
-                throw;
-            }
+            while (!WaitForSingleObject(0))
+                await Task.Yield();
         }
 
         /// <summary>
@@ -48,7 +39,12 @@ namespace AsgardFramework.Memory
         /// </param>
         /// <returns><see langword="true" /> if signaled; otherwise <see langword="false" /></returns>
         public bool WaitForSingleObject(int milliseconds) {
-            return Kernel.WaitForSingleObject(handle, milliseconds) == 0;
+            var code = Kernel.WaitForSingleObject(handle, milliseconds);
+
+            if (code == -1)
+                throw new InvalidOperationException($"Can't wait on given handle (error: 0x{Kernel.GetLastError():X})");
+
+            return code == 0;
         }
 
         protected override bool ReleaseHandle() {

@@ -4,9 +4,11 @@
     {
         #region Methods
 
-        public override void Parse(string[] data) {
+        public override LuaValue Parse(string[] data) {
             LocalizedName = data[0];
             Name = data[1];
+
+            return this;
         }
 
         #endregion Methods

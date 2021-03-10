@@ -228,22 +228,6 @@ namespace AsgardFramework.WoWAPI
         Task LootSlotAsync(int slotNumberFromOne);
 
         /// <summary>
-        ///     Runs a string as a Lua script. Protected functions are available
-        /// </summary>
-        Task RunScriptAsync(string luaScript);
-
-        /// <summary>
-        ///     Runs a string as a Lua script. Protected functions are available. Saves <paramref name="fieldsCount" /> variables
-        ///     from first expression
-        /// </summary>
-        Task<T> RunScriptAsync<T>(string luaScript, int fieldsCount = 10) where T : LuaValue, new();
-
-        /// <summary>
-        ///     Runs a string as a Lua script. Protected functions are available
-        /// </summary>
-        Task<string> RunScriptAsync(string luaScript, string retVariableName);
-
-        /// <summary>
         ///     Causes the player character to automatically follow another unit. Only friendly player units can be followed.
         /// </summary>
         /// <param name="unitMetaIdOrName">A unit to follow</param>

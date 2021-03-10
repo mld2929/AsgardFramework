@@ -36,6 +36,15 @@ namespace AsgardFramework.Memory
         internal static extern IntPtr CreateToolhelp32Snapshot(int dwFlags, int th32ProcessID);
 
         [DllImport("Kernel32.dll")]
+        internal static extern bool DuplicateHandle(SafeHandle hSourceProcessHandle,
+                                                    IntPtr hSourceHandle,
+                                                    IntPtr hTargetProcessHandle,
+                                                    out IntPtr lpTargetHandle,
+                                                    int dwDesiredAccess = 0,
+                                                    bool bInheritHandle = true,
+                                                    int dwOptions = 0x00000002);
+
+        [DllImport("Kernel32.dll")]
         internal static extern bool GetExitCodeThread(IntPtr hThread, out int lpExitCode);
 
         [DllImport("Kernel32.dll")]
@@ -46,6 +55,9 @@ namespace AsgardFramework.Memory
 
         [DllImport("Kernel32.dll")]
         internal static extern bool Module32NextW(IntPtr hSnapshot, IntPtr lpme);
+
+        [DllImport("Kernel32.dll")]
+        internal static extern IntPtr OpenEventW(int dwDesiredAccess, bool bInheritHandle, [MarshalAs(UnmanagedType.LPWStr)] string lpName);
 
         [DllImport("Kernel32.dll")]
         internal static extern SafeProcessHandle OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);

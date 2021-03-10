@@ -62,7 +62,9 @@ namespace AsgardFramework.Memory
                 throw new ObjectDisposedException(nameof(KernelDrivenMemoryBase));
 
             var buffer = new byte[count];
-            Kernel.ReadProcessMemory(m_processHandle, offset, buffer, count, out _);
+
+            if (!Kernel.ReadProcessMemory(m_processHandle, offset, buffer, count, out var actual) || actual != count)
+                throw new InvalidOperationException($"Can't read bytes at 0x{offset:X} (read {actual}/{count}; error: 0x{Kernel.GetLastError():X})");
 
             return buffer;
         }
@@ -266,7 +268,8 @@ namespace AsgardFramework.Memory
             if (Disposed)
                 throw new ObjectDisposedException(nameof(KernelDrivenMemoryBase));
 
-            Kernel.WriteProcessMemory(m_processHandle, offset, data, data.Length, out _);
+            if (!Kernel.WriteProcessMemory(m_processHandle, offset, data, data.Length, out var written) || written != data.Length)
+                throw new InvalidOperationException($"Can't write bytes at 0x{offset:X} (read {written}/{data.Length}; error: 0x{Kernel.GetLastError():X})");
         }
 
         public void Write<T>(int offset, T data) where T : new() {
@@ -293,6 +296,10 @@ namespace AsgardFramework.Memory
             }
 
             Write(offset, bytes);
+        }
+
+        public void Write(int offset, IAutoManagedMemory pointer) {
+            Write(offset, pointer.Start);
         }
 
         public void WriteNullTerminatedString(int offset, string data, Encoding encoding) {

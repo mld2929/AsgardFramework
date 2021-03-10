@@ -24,8 +24,6 @@ namespace AsgardFramework.Memory
 
         #region Fields
 
-        private const string c_executorCore = "AsgardFramework.Core.dll";
-
         private readonly int m_procId;
 
         private readonly DllWrapper m_procKernel;
@@ -64,7 +62,7 @@ namespace AsgardFramework.Memory
         }
 
         public IMainThreadExecutor GetMainThreadExecutor() {
-            return m_mainThreadExecutor ??= new EndSceneHookExecutor(Allocate(0x80000), LoadDll(c_executorCore));
+            return m_mainThreadExecutor ??= new EndSceneHookExecutor(AllocateAutoScalingShared(0x80000), loadCore());
         }
 
         public IDll LoadDll(string path) {
@@ -87,7 +85,7 @@ namespace AsgardFramework.Memory
             if (fullPath == null || !File.Exists(fullPath))
                 throw new DllNotFoundException(path);
 
-            await m_procKernel["LoadLibraryW", true, Encoding.Unicode, fullPath]
+            await m_procKernel[true, "LoadLibraryW", Encoding.Unicode](fullPath)
                 .ConfigureAwait(false);
 
             var dll = new DllWrapper(Path.GetFileName(path), m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
@@ -135,6 +133,18 @@ namespace AsgardFramework.Memory
             addWeakHandlerFor(memory);
 
             return memory;
+        }
+
+        private ICoreDll loadCore() {
+            if (!File.Exists(CoreWrapper.c_coreName))
+                throw new DllNotFoundException($"Unable to find {CoreWrapper.c_coreName}");
+
+            m_procKernel["LoadLibraryW", true, Encoding.Unicode](Path.GetFullPath(CoreWrapper.c_coreName));
+
+            var core = new CoreWrapper(m_processHandle, m_procId, m_procKernel, AllocateAutoScalingShared(4096));
+            addWeakHandlerFor(core);
+
+            return core;
         }
 
         #endregion Methods

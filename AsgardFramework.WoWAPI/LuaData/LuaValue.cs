@@ -95,7 +95,7 @@ namespace AsgardFramework.WoWAPI.LuaData
     {
         #region Methods
 
-        public abstract void Parse(string[] data);
+        public abstract LuaValue Parse(string[] data);
 
         #endregion Methods
     }
@@ -114,8 +114,10 @@ namespace AsgardFramework.WoWAPI.LuaData
             return value.value;
         }
 
-        public sealed override void Parse(string[] data) {
+        public sealed override LuaValue Parse(string[] data) {
             value = ParseData(data);
+
+            return this;
         }
 
         protected abstract T ParseData(string[] data);

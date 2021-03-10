@@ -9,7 +9,7 @@ static unknown** unknown_;
 static end_scene_t endScene;
 
 std::map<std::u8string, func_descriptor, std::less<>> EndSceneHook::functions;
-func_call_data* EndSceneHook::queue;
+func_call_data** EndSceneHook::queue;
 HANDLE EndSceneHook::executionEvent;
 
 static int perform_call(const func_descriptor& desc, const int* args)
@@ -52,11 +52,12 @@ static __declspec(naked) void hook()
 		pushad
 		pushfd
 		}
-	if (WaitForSingleObject(EndSceneHook::executionEvent, 0) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(EndSceneHook::executionEvent, 0) != WAIT_OBJECT_0)
 	{
-		for (auto* data = EndSceneHook::queue; data->name; data++)
+		for (auto** data = EndSceneHook::queue; data; data++)
 		{
-			data->result = perform_call(EndSceneHook::get_descriptor(data->name), data->args);
+			printf("%s\n", (*data)->name);
+			*(*data)->result = perform_call(EndSceneHook::get_descriptor((*data)->name), (*data)->args);
 		}
 		SetEvent(EndSceneHook::executionEvent);
 	}

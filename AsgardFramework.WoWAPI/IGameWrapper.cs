@@ -12,6 +12,7 @@ namespace AsgardFramework.WoWAPI
         IGameFunctions GameFunctions { get; }
         int ID { get; }
         IInjectedFunctions InjectedFunctions { get; }
+        ILuaScriptExecutor LuaExecutor { get; }
         IObjectManager ObjectManager { get; }
         string PlayerName { get; }
         ISpellBook SpellBook { get; }

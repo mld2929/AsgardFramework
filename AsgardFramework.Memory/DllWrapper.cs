@@ -10,6 +10,8 @@ namespace AsgardFramework.Memory
     {
         #region Fields
 
+        protected readonly int m_pid;
+        protected readonly SafeHandle m_process;
         private const int c_padding = 0x10;
 
         // this is x86 assembly code, it allows to push any arguments to callee (encoded in UTF16-LE)
@@ -18,8 +20,6 @@ namespace AsgardFramework.Memory
         private readonly IAutoScalingSharedBuffer m_buffer;
         private readonly object m_cacheLock = new object();
         private readonly DllWrapper m_kernel;
-        private readonly int m_pid;
-        private readonly SafeHandle m_process;
         private readonly Dictionary<string, int> m_procsCache = new Dictionary<string, int>();
         private readonly IAutoManagedMemory m_unwrapper;
 
@@ -58,7 +58,7 @@ namespace AsgardFramework.Memory
 
         public RemoteFunction this[string name, bool isStd, Encoding encoding = default] => args => callSync(name, isStd, encoding ?? Encoding.Unicode, args);
 
-        public Task<int> this[string name, bool isStd, Encoding encoding = default, params object[] args] => callAsync(name, isStd, encoding ?? Encoding.Unicode, args);
+        public RemoteAsyncFunction this[bool isStd, string name, Encoding encoding = default] => args => callAsync(name, isStd, encoding ?? Encoding.Unicode, args);
 
         #endregion Indexers
 
@@ -155,8 +155,8 @@ namespace AsgardFramework.Memory
         private int getResultAndFreeMemory(SafeWaitHandleSlim thread, IAutoManagedMemory unwrapperArg) {
             thread.WaitForSingleObject(-1);
 
-            if (!Kernel.GetExitCodeThread(thread.DangerousGetHandle(), out _))
-                throw new ArgumentException($"Can't get result from given handle (Error: 0x{Kernel.GetLastError()})", nameof(thread));
+            if (!Kernel.GetExitCodeThread(thread.DangerousGetHandle(), out var code))
+                throw new ArgumentException($"Can't get result from given handle (Error: 0x{Kernel.GetLastError()}, exit code: {code})", nameof(thread));
 
             var result = unwrapperArg.Read<int>(8);
             unwrapperArg.Dispose();
@@ -198,19 +198,19 @@ namespace AsgardFramework.Memory
                     isStd,
                     0,
                     0
-                }, WriteType.Pointer, encoding),
+                }, WideFieldsWriteType.Pointer, encoding),
                 1 => m_buffer.WriteStruct(new[] {
                     procAddress,
                     isStd,
                     1,
                     args![0]
-                }, WriteType.Pointer, encoding),
+                }, WideFieldsWriteType.Pointer, encoding),
                 _ => m_buffer.WriteStruct(new object[] {
                     procAddress,
                     isStd,
                     args.Length,
                     args
-                }, WriteType.Pointer, encoding)
+                }, WideFieldsWriteType.Pointer, encoding)
             };
         }
 

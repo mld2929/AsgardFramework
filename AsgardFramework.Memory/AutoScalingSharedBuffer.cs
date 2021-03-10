@@ -37,32 +37,28 @@ namespace AsgardFramework.Memory
         #region Methods
 
         public IAutoManagedMemory Write<T>(T data) where T : new() {
-            var memory = Reserve(Marshal.SizeOf<T>());
-            memory.Write(0, data);
-
-            return memory;
+            return WriteStruct(new object[] {
+                data
+            });
         }
 
         public IAutoManagedMemory Write<T>(T[] data) where T : new() {
-            var memory = Reserve(Marshal.SizeOf<T>() * data.Length);
-            memory.Write(0, data);
-
-            return memory;
+            return WriteStruct(data.Cast<object>());
         }
 
         public IAutoManagedMemory WriteString(string value, Encoding encoding) {
-            var bytes = encoding.GetBytes(value + '\0');
-            var memory = Reserve(bytes.Length);
-            memory.Write(0, bytes);
-
-            return memory;
+            return WriteStruct(new object[] {
+                value
+            }, WideFieldsWriteType.ByVal, encoding);
         }
 
-        public IAutoManagedMemory WriteStruct(object[] data, WriteType forWideFields, Encoding forStrings, int padding = 1) {
-            int calculateSizeRecursively(object[] _data) {
+        public IAutoManagedMemory WriteStruct(IEnumerable<object> data, WideFieldsWriteType forWideFields = WideFieldsWriteType.ByVal, Encoding forStrings = default, int padding = 1) {
+            forStrings ??= Encoding.Unicode;
+
+            int calculateSizeRecursively(IEnumerable<object> __data) {
                 var calculated = 0;
 
-                foreach (var obj in _data)
+                foreach (var obj in __data)
                     switch (obj) {
                         case null:
                             calculated += 4;
@@ -80,7 +76,7 @@ namespace AsgardFramework.Memory
                             break;
 
                         case string str:
-                            if (forWideFields == WriteType.ByVal)
+                            if (forWideFields == WideFieldsWriteType.ByVal)
                                 calculated += forStrings.GetByteCount(str + '\0');
                             else
                                 calculated += 4;
@@ -88,7 +84,7 @@ namespace AsgardFramework.Memory
                             break;
 
                         case IEnumerable<object> enumerable:
-                            if (forWideFields == WriteType.ByVal)
+                            if (forWideFields == WideFieldsWriteType.ByVal)
                                 calculated += calculateSizeRecursively(enumerable.ToArray());
                             else
                                 calculated += 4;
@@ -104,7 +100,7 @@ namespace AsgardFramework.Memory
                             var sz = Marshal.SizeOf(obj.GetType());
                             sz = sz <= 4 ? 4 : sz;
 
-                            if (forWideFields == WriteType.ByVal && sz > 4)
+                            if (forWideFields == WideFieldsWriteType.ByVal && sz > 4)
                                 calculated += sz;
                             else
                                 calculated += 4;
@@ -115,11 +111,11 @@ namespace AsgardFramework.Memory
                 return calculated;
             }
 
-            var size = forWideFields == WriteType.ByVal ? calculateSizeRecursively(data) : data.Length * 4;
+            var size = forWideFields == WideFieldsWriteType.ByVal ? calculateSizeRecursively(data) : data.Count() * 4;
             var structure = new AutoManagedStructure(reserveBlock(size));
 
-            int writeObjectsRecursively(IEnumerable<object> _data, AutoManagedStructure buffer, int offset) {
-                foreach (var obj in _data)
+            int writeObjectsRecursively(IEnumerable<object> __data, AutoManagedStructure buffer, int offset) {
+                foreach (var obj in __data)
                     switch (obj) {
                         case null:
                             buffer.Write(offset, 0);
@@ -136,7 +132,7 @@ namespace AsgardFramework.Memory
                         case string str:
                             var length = forStrings.GetByteCount(str + '\0');
 
-                            if (forWideFields == WriteType.ByVal) {
+                            if (forWideFields == WideFieldsWriteType.ByVal) {
                                 buffer.WriteNullTerminatedString(offset, str, forStrings);
                                 offset += length;
                             } else {
@@ -152,7 +148,7 @@ namespace AsgardFramework.Memory
                         case IEnumerable<object> enumerable:
                             var arr = enumerable.ToArray();
 
-                            if (forWideFields == WriteType.ByVal) {
+                            if (forWideFields == WideFieldsWriteType.ByVal) {
                                 offset = writeObjectsRecursively(arr, buffer, offset);
                             } else {
                                 var pStruct = new AutoManagedStructure(reserveBlock(calculateSizeRecursively(arr)));
@@ -187,7 +183,7 @@ namespace AsgardFramework.Memory
                                 }
                             }
 
-                            if (forWideFields == WriteType.ByVal || bytes.Length <= 4) {
+                            if (forWideFields == WideFieldsWriteType.ByVal || bytes.Length <= 4) {
                                 buffer.Write(offset, bytes);
                                 offset += bytes.Length;
                             } else {

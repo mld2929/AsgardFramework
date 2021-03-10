@@ -47,7 +47,7 @@ struct func_call_data
 {
 	const char8_t* name;
 	const int* args;
-	int result;
+	int* result;
 };
 
 #pragma pack(pop)
@@ -60,6 +60,6 @@ public:
 	~EndSceneHook();
 	static HANDLE executionEvent;
 	static void loadFunctions(const std::vector<func_init_data>& data);
-	static func_call_data* queue;
+	static func_call_data** queue;
 	static const func_descriptor& get_descriptor(const char8_t* name);
 };

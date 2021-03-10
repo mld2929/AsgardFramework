@@ -16,7 +16,7 @@
     {
         #region Methods
 
-        public override void Parse(string[] data) {
+        public override LuaValue Parse(string[] data) {
             Texture = data[0];
             NameOrDescription = data[1];
 
@@ -28,6 +28,8 @@
 
             Locked = data[4]
                 .ToBool();
+
+            return this;
         }
 
         #endregion Methods
