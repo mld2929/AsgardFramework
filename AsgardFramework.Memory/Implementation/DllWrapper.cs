@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     internal class DllWrapper : SafeHandle, IDll
     {
@@ -118,22 +119,21 @@ namespace AsgardFramework.Memory
             var pModule = allocModule();
             MODULEENTRY32W module = null;
             var equals = false;
-
+            var name = Path.GetFileName(dllName);
             while (!equals && Kernel.Module32NextW(snapshot, pModule)) {
                 module = Marshal.PtrToStructure<MODULEENTRY32W>(pModule);
-                equals = module!.szModule.Equals(dllName, StringComparison.OrdinalIgnoreCase);
+                equals = module?.szModule.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false;
             }
 
+            if (!equals)
+                throw new ArgumentException($"DLL \"{name}\" ({dllName}) not found", nameof(dllName));
             Marshal.FreeHGlobal(pModule);
             Kernel.CloseHandle(snapshot);
 
-            var hModule = (IntPtr)module!.hModule;
-            Name = module!.szModule;
+            Name = module.szModule;
 
-            if (hModule == IntPtr.Zero)
-                throw new ArgumentException($"DLL \"{dllName}\" not found", nameof(dllName));
 
-            return hModule;
+            return (IntPtr)module.hModule;
         }
 
         private int getProcAddress(string procName) {

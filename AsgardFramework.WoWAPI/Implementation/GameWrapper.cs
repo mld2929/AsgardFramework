@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 
 using AsgardFramework.Memory;
+using AsgardFramework.Memory.Implementation;
 
 namespace AsgardFramework.WoWAPI.Implementation
 {

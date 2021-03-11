@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     internal static class TaskHelper
     {
@@ -64,8 +64,8 @@ namespace AsgardFramework.Memory
                 callData = data.ToList();
                 callsCount = callData.Count;
 
-                if (callsCount > c_callDataSize)
-                    throw new ArgumentException("Too many functions in one frame");
+                if (callsCount > c_queueCapacity)
+                    throw new ArgumentException($"Too many functions in one frame ({callsCount} vs {c_queueCapacity})");
             }
 
             #endregion Constructors

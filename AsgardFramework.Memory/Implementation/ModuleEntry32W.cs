@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal class MODULEENTRY32W

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     public sealed class InterprocessManualResetEventSlim : SafeWaitHandleSlim
     {

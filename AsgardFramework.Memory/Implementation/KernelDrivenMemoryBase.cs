@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     public abstract class KernelDrivenMemoryBase : SafeHandle, IMemory
     {
@@ -269,7 +269,7 @@ namespace AsgardFramework.Memory
                 throw new ObjectDisposedException(nameof(KernelDrivenMemoryBase));
 
             if (!Kernel.WriteProcessMemory(m_processHandle, offset, data, data.Length, out var written) || written != data.Length)
-                throw new InvalidOperationException($"Can't write bytes at 0x{offset:X} (read {written}/{data.Length}; error: 0x{Kernel.GetLastError():X})");
+                throw new InvalidOperationException($"Can't write bytes at 0x{offset:X} (written {written}/{data.Length}; error: 0x{Kernel.GetLastError():X})");
         }
 
         public void Write<T>(int offset, T data) where T : new() {

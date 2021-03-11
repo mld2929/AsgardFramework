@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+using AsgardFramework.Memory.Implementation;
+
 namespace AsgardFramework.Memory
 {
     internal interface ICoreDll : IDll

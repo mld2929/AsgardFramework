@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     internal class CoreWrapper : DllWrapper, ICoreDll
     {

@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     public sealed class GlobalMemory : KernelDrivenMemoryBase, IGlobalMemory
     {

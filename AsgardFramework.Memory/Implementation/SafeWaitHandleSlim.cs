@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Win32.SafeHandles;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     public class SafeWaitHandleSlim : SafeHandleZeroOrMinusOneIsInvalid
     {

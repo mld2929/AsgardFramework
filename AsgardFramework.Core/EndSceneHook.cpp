@@ -54,7 +54,8 @@ static __declspec(naked) void hook()
 		}
 	if (WaitForSingleObject(EndSceneHook::executionEvent, 0) != WAIT_OBJECT_0)
 	{
-		for (auto** data = EndSceneHook::queue; data; data++)
+		printf("Got signal for execution!\n");
+		for (auto** data = EndSceneHook::queue; *data; data++)
 		{
 			printf("%s\n", (*data)->name);
 			*(*data)->result = perform_call(EndSceneHook::get_descriptor((*data)->name), (*data)->args);
@@ -74,17 +75,18 @@ EndSceneHook::EndSceneHook()
 	executionEvent = CreateEventW(nullptr, true, true, nullptr);
 	DWORD old;
 	unknown_ = reinterpret_cast<unknown**>(0xC5DF88);
-	VirtualProtect(unknown_, sizeof(unknown*), PAGE_EXECUTE_READWRITE, &old);
+	VirtualProtect(unknown_, 4, PAGE_EXECUTE_READWRITE, &old);
 	VirtualProtect(*unknown_, sizeof(unknown), PAGE_EXECUTE_READWRITE, &old);
-	auto* raw = reinterpret_cast<device_raw*>((*unknown_)->device);
-	VirtualProtect(raw, sizeof(device_raw), PAGE_EXECUTE_READWRITE, &old);
-	endScene = raw->EndScene;
-	raw->EndScene = hook;
+	auto** device = (*unknown_)->device;
+	VirtualProtect(device, 4, PAGE_EXECUTE_READWRITE, &old);
+	VirtualProtect(*device, sizeof(IDirect3DDevice9), PAGE_EXECUTE_READWRITE, &old);
+	endScene = reinterpret_cast<device_raw*>(*device)->EndScene;
+	reinterpret_cast<device_raw*>(*device)->EndScene = hook;
 }
 
 EndSceneHook::~EndSceneHook()
 {
-	reinterpret_cast<device_raw*>((*unknown_)->device)->EndScene = endScene;
+	reinterpret_cast<device_raw*>(*(*unknown_)->device)->EndScene = endScene;
 	CloseHandle(executionEvent);
 }
 

@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     internal class AutoManagedSharedBuffer : AutoManagedMemory, IAutoManagedSharedBuffer
     {

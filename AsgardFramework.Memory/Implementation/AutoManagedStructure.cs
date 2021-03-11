@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AsgardFramework.Memory
+namespace AsgardFramework.Memory.Implementation
 {
     internal class AutoManagedStructure : SharedBlock
     {
