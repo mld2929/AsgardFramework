@@ -264,12 +264,14 @@ namespace AsgardFramework.Memory.Implementation
             });
         }
 
-        public virtual void Write(int offset, byte[] data) {
+        public virtual void Write(int offset, IEnumerable<byte> data) {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(KernelDrivenMemoryBase));
 
-            if (!Kernel.WriteProcessMemory(m_processHandle, offset, data, data.Length, out var written) || written != data.Length)
-                throw new InvalidOperationException($"Can't write bytes at 0x{offset:X} (written {written}/{data.Length}; error: 0x{Kernel.GetLastError():X})");
+            var forWrite = data.ToArray();
+
+            if (!Kernel.WriteProcessMemory(m_processHandle, offset, forWrite, forWrite.Length, out var written) || written != forWrite.Length)
+                throw new InvalidOperationException($"Can't write bytes at 0x{offset:X} (written {written}/{forWrite.Length}; error: 0x{Kernel.GetLastError():X})");
         }
 
         public void Write<T>(int offset, T data) where T : new() {
@@ -284,18 +286,27 @@ namespace AsgardFramework.Memory.Implementation
             Write(offset, bytes);
         }
 
-        public void Write<T>(int offset, T[] data) where T : new() {
+        public void Write<T>(int offset, IEnumerable<T> data) where T : new() {
             var size = Marshal.SizeOf<T>();
-            var bytes = new byte[size * data.Length];
+            var forWrite = data.ToArray();
+            var bytes = new byte[size * forWrite.Length];
 
             unsafe {
                 fixed (byte* buffer = bytes) {
-                    for (var i = 0; i < data.Length; i++)
-                        Unsafe.As<byte, T>(ref buffer[i * size]) = data[i];
+                    for (var i = 0; i < forWrite.Length; i++)
+                        Unsafe.As<byte, T>(ref buffer[i * size]) = forWrite[i];
                 }
             }
 
-            Write(offset, bytes);
+            Write(offset, (IEnumerable<byte>)bytes);
+        }
+
+        public void Write<T>(int offset, ICollection<T> data) where T : new() {
+            Write(offset, (IEnumerable<T>)data);
+        }
+
+        public void Write(int offset, IEnumerable<IAutoManagedMemory> pointers) {
+            Write(offset, pointers.Select(p => p.Start));
         }
 
         public void Write(int offset, IAutoManagedMemory pointer) {

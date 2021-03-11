@@ -19,7 +19,8 @@ namespace AsgardFramework.WoWAPI.LuaData
         }
 
         public static T ToEnum<T>(this string data) where T : Enum {
-            Enum.TryParse(typeof(T), data, out var result);
+            if (!Enum.TryParse(typeof(T), data, out var result))
+                throw new InvalidOperationException($"Can't parse \"{data}\" as {typeof(T)}");
 
             return (T)result;
         }

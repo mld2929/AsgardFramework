@@ -42,7 +42,7 @@ namespace AsgardFramework.Memory.Implementation
                 if (count != value.Count())
                     throw new ArgumentOutOfRangeException();
 
-                Write(offset, value.ToArray());
+                Write(offset, value);
             }
         }
 
@@ -73,7 +73,7 @@ namespace AsgardFramework.Memory.Implementation
         /// <summary>
         ///     Converts virtual offset to absolute
         /// </summary>
-        public sealed override void Write(int offset, byte[] data) {
+        public sealed override void Write(int offset, IEnumerable<byte> data) {
             base.Write(Start + offset, data);
         }
 

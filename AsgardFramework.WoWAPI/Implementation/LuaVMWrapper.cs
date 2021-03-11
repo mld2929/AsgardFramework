@@ -59,13 +59,13 @@ namespace AsgardFramework.WoWAPI.Implementation
             };
 
             return m_executor[executionList](new object[] {
-                script,
-                m_luaTop
+                m_luaTop,
+                script
             }, new object[] {
                 m_luaTop
             }, new object[] {
-                0,
-                m_luaTop
+                m_luaTop,
+                0
             });
         }
 
@@ -95,8 +95,8 @@ namespace AsgardFramework.WoWAPI.Implementation
 
             var executionArgs = new List<object[]> {
                 new object[] {
-                    script,
-                    m_luaTop
+                    m_luaTop,
+                    script
                 },
                 new object[] {
                     m_luaTop
@@ -104,14 +104,14 @@ namespace AsgardFramework.WoWAPI.Implementation
             };
 
             executionArgs.AddRange(returnVariables.Select(v => new object[] {
-                0,
+                v,
                 -1,
-                v
+                0
             }));
 
             executionArgs.Add(new object[] {
-                0,
-                m_luaTop
+                m_luaTop,
+                0
             });
 
             return (await m_executor[executionList](executionArgs.ToArray())

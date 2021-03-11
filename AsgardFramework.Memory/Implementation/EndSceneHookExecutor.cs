@@ -31,7 +31,6 @@ namespace AsgardFramework.Memory.Implementation
         internal EndSceneHookExecutor(IAutoScalingSharedBuffer buffer, ICoreDll core) {
             m_buffer = buffer;
             m_processQueue = m_buffer.Reserve(c_queueSize);
-            m_results = m_buffer.Reserve(c_queueCapacity * 4);
             m_core = core;
             m_event = m_core.InitializeInteraction(m_processQueue);
         }
@@ -42,51 +41,57 @@ namespace AsgardFramework.Memory.Implementation
 
         private class ExecutionFrame
         {
+            #region Methods
+
+            internal async Task<int[]> waitForResults() {
+                while (!Executed)
+                    await Task.Yield();
+
+                var results = CallData.Select(data => data.Read<int>(8))
+                                      .ToArray();
+
+                CallData.ForEach(d => d.Dispose());
+                Frame.Dispose();
+
+                return results;
+            }
+
+            #endregion Methods
+
             #region Fields
 
-            internal readonly IReadOnlyList<(string, object[])> callData;
-            internal readonly int callsCount;
-            internal int resultsIndex = -1;
+            internal readonly IAutoManagedMemory Frame;
+            internal bool Executed;
+            private readonly List<IAutoManagedMemory> CallData;
 
             #endregion Fields
 
             #region Constructors
 
-            internal ExecutionFrame((string, object[]) data) {
-                callsCount = 1;
-
-                callData = new[] {
-                    data
+            internal ExecutionFrame((string, object[]) data, IAutoScalingSharedBuffer buffer) {
+                CallData = new List<IAutoManagedMemory> {
+                    buffer.WriteStruct(new object[] {
+                        data.Item1,
+                        data.Item2,
+                        0 // reserved for result
+                    }, WideFieldsWriteType.Pointer, Encoding.UTF8)
                 };
+
+                Frame = buffer.WriteStruct(CallData);
             }
 
-            internal ExecutionFrame(IEnumerable<(string, object[])> data) {
-                callData = data.ToList();
-                callsCount = callData.Count;
+            internal ExecutionFrame(IReadOnlyList<(string, object[])> data, IAutoScalingSharedBuffer buffer) {
+                CallData = data.Select(d => buffer.WriteStruct(new object[] {
+                                   d.Item1,
+                                   d.Item2,
+                                   0 // reserved for result
+                               }, WideFieldsWriteType.Pointer, Encoding.UTF8))
+                               .ToList();
 
-                if (callsCount > c_queueCapacity)
-                    throw new ArgumentException($"Too many functions in one frame ({callsCount} vs {c_queueCapacity})");
+                Frame = buffer.WriteStruct(CallData);
             }
 
             #endregion Constructors
-
-            #region Methods
-
-            internal int[] GetMultipleResults(IAutoManagedMemory resultsBuffer, ref int readers) {
-                var result = resultsBuffer.Read<int>(resultsIndex * 4, callsCount);
-                Interlocked.Add(ref readers, -callsCount);
-
-                return result;
-            }
-
-            internal int GetResult(IAutoManagedMemory resultBuffer, ref int readers) {
-                var result = resultBuffer.Read<int>(resultsIndex * 4);
-                Interlocked.Decrement(ref readers);
-
-                return result;
-            }
-
-            #endregion Methods
         }
 
         #endregion Classes
@@ -105,15 +110,13 @@ namespace AsgardFramework.Memory.Implementation
 
         private readonly InterprocessManualResetEventSlim m_event;
 
-        private readonly ExecutionLock m_lock = new ExecutionLock();
+        private readonly OptionalLock m_executionLock = new OptionalLock();
 
         private readonly IAutoManagedMemory m_processQueue;
 
         private readonly ConcurrentQueue<ExecutionFrame> m_queue = new ConcurrentQueue<ExecutionFrame>();
 
-        private readonly IAutoManagedMemory m_results;
-
-        private int m_readers;
+        private readonly OptionalLock m_registrationLock = new OptionalLock();
 
         #endregion Fields
 
@@ -131,122 +134,91 @@ namespace AsgardFramework.Memory.Implementation
 
         #region Methods
 
-        public RemoteMainThreadFunction RegisterFunction(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount) {
-            m_lock.StartLockedAccess();
+        public void RegisterFunction(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount) {
+            m_registrationLock.StartLockedAccess();
 
             m_core.RegisterFunction(functionName, functionType, functionAddress, argumentsCount);
-            m_lock.EndLockedAccess();
-
-            return this[functionName, Timeout.Infinite];
+            m_registrationLock.EndLockedAccess();
         }
 
-        public IReadOnlyList<RemoteMainThreadFunction> RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions) {
-            m_lock.StartLockedAccess();
+        public void RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions) {
+            m_registrationLock.StartLockedAccess();
 
             m_core.RegisterFunctions(functions);
-            m_lock.EndLockedAccess();
-
-            return functions.Select(descriptor => this[descriptor.functionName, Timeout.Infinite])
-                            .ToList();
+            m_registrationLock.EndLockedAccess();
         }
 
         private async Task<int> executeAsync(string functionName, params object[] args) {
-            var frame = new ExecutionFrame((functionName, args));
+            var frame = new ExecutionFrame((functionName, args), m_buffer);
             m_queue.Enqueue(frame);
 
-            await executeOrWaitAsync(frame)
-                .ConfigureAwait(false);
-
-            return frame.GetResult(m_results, ref m_readers);
+            return (await executeOrWaitAsync(frame)
+                        .ConfigureAwait(false))[0];
         }
 
-        private async Task executeOrWaitAsync(ExecutionFrame frame) {
-            while (frame.resultsIndex == -1) {
-                while (m_readers != 0)
-                    await Task.Yield();
+        private async Task<int[]> executeOrWaitAsync(ExecutionFrame frame) {
+            await m_registrationLock.StartAccessAsync()
+                                    .ConfigureAwait(false);
 
-                if (await m_lock.TryStartLockedAccessAsync()
-                                .ConfigureAwait(false)) {
-                    var pointers = await flushQueue()
-                                       .ConfigureAwait(false);
+            if (!await m_executionLock.TryStartLockedAccessAsync()
+                                      .ConfigureAwait(false)) {
+                m_registrationLock.EndAccess();
 
-                    m_event.ResetEvent();
-
-                    await m_event.WaitForSignalAsync()
-                                 .ConfigureAwait(false);
-
-                    foreach (var ptr in pointers)
-                        ptr.Dispose();
-
-                    m_lock.EndLockedAccess();
-                } else {
-                    await m_lock.StartAccessAsync()
-                                .ConfigureAwait(false);
-
-                    m_lock.EndAccess();
-                }
+                return await frame.waitForResults()
+                                  .ConfigureAwait(false);
             }
-        }
 
-        private async Task<int[]> executeSequentiallyAsync(IEnumerable<(string functionName, object[] args)> functions) {
-            var frame = new ExecutionFrame(functions);
-            m_queue.Enqueue(frame);
+            var dequeued = await flushQueueAsync()
+                               .ConfigureAwait(false);
 
-            await executeOrWaitAsync(frame)
-                .ConfigureAwait(false);
+            m_event.ResetEvent();
 
-            return frame.GetMultipleResults(m_results, ref m_readers);
-        }
-
-        private async Task<IReadOnlyList<IAutoManagedMemory>> flushQueue() {
             await m_event.WaitForSignalAsync()
                          .ConfigureAwait(false);
 
-            await m_lock.StartLockedAccessAsync()
-                        .ConfigureAwait(false);
+            m_executionLock.EndLockedAccess();
+            m_registrationLock.EndAccess();
+
+            dequeued.ForEach(fr => fr.Executed = true);
+
+            return await frame.waitForResults()
+                              .ConfigureAwait(false);
+        }
+
+        private Task<int[]> executeSequentiallyAsync(IEnumerable<(string functionName, object[] args)> functions) {
+            var frame = new ExecutionFrame(functions.ToList(), m_buffer);
+            m_queue.Enqueue(frame);
+
+            return executeOrWaitAsync(frame);
+        }
+
+        private async Task<List<ExecutionFrame>> flushQueueAsync() {
+            await m_event.WaitForSignalAsync()
+                         .ConfigureAwait(false);
 
             m_processQueue.Fill(0);
-            var pointers = new List<IAutoManagedMemory>();
+            var dequeued = new List<ExecutionFrame>();
 
-            for (var dequeued = 0; dequeued < c_queueCapacity;) {
-                if (!m_queue.TryPeek(out var function))
+            for (var i = 0; i < c_queueCapacity; i++) {
+                if (!m_queue.TryDequeue(out var frame))
                     break;
 
-                if (function.callsCount > c_queueCapacity - dequeued)
-                    break;
-
-                m_readers++;
-                m_queue.TryDequeue(out _);
-                function.resultsIndex = dequeued;
-
-                for (int callDataIndex = 0, offset = 0; callDataIndex < function.callsCount; offset = (dequeued + callDataIndex) * 4, callDataIndex++, dequeued++) {
-                    var (name, args) = function.callData.ElementAt(callDataIndex);
-
-                    var pointer = m_buffer.WriteStruct(new object[] {
-                        name,
-                        args,
-                        m_results + offset
-                    }, WideFieldsWriteType.Pointer, Encoding.UTF8);
-
-                    m_processQueue.Write(offset, pointer);
-                    pointers.Add(pointer);
-                }
+                dequeued.Add(frame);
             }
 
-            m_lock.EndLockedAccess();
+            m_processQueue.Write(0, dequeued.Select(f => f.Frame));
 
-            return pointers;
+            return dequeued;
         }
 
         #endregion Methods
     }
-
-    // todo: test and rewrite if needed
-    internal class ExecutionLock
+    // doesn't work lol, i got ~50 tasks entered locked section
+    internal class OptionalLock
     {
         #region Fields
 
-        //private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(0, 1);
+        private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
         private volatile int m_accessers;
 
         private volatile int m_lockedAccessCount;
@@ -260,7 +232,7 @@ namespace AsgardFramework.Memory.Implementation
         }
 
         internal void EndLockedAccess() {
-            //m_semaphore.Release();
+            m_semaphore.Release();
             Interlocked.Decrement(ref m_lockedAccessCount);
         }
 
@@ -277,7 +249,7 @@ namespace AsgardFramework.Memory.Implementation
             while (m_accessers != 0)
                 ;
 
-            //m_semaphore.Wait();
+            m_semaphore.Wait();
         }
 
         internal async Task StartLockedAccessAsync() {
@@ -286,20 +258,20 @@ namespace AsgardFramework.Memory.Implementation
             while (m_accessers != 0)
                 await Task.Yield();
 
-            //await m_semaphore.WaitAsync().ConfigureAwait(true);
+            await m_semaphore.WaitAsync()
+                             .ConfigureAwait(false);
         }
 
         internal async Task<bool> TryStartLockedAccessAsync() {
             Interlocked.Increment(ref m_lockedAccessCount);
 
-            //var entered = await m_semaphore.WaitAsync(0)
-            //.ConfigureAwait(true);
+            var entered = await m_semaphore.WaitAsync(0)
+                                           .ConfigureAwait(false);
 
-            //if (!entered)
-            //Interlocked.Decrement(ref m_lockedAccessCount);
+            if (!entered)
+                Interlocked.Decrement(ref m_lockedAccessCount);
 
-            //return entered;
-            return true;
+            return entered;
         }
 
         #endregion Methods

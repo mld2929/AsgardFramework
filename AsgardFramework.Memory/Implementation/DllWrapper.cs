@@ -120,6 +120,7 @@ namespace AsgardFramework.Memory.Implementation
             MODULEENTRY32W module = null;
             var equals = false;
             var name = Path.GetFileName(dllName);
+
             while (!equals && Kernel.Module32NextW(snapshot, pModule)) {
                 module = Marshal.PtrToStructure<MODULEENTRY32W>(pModule);
                 equals = module?.szModule.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false;
@@ -127,11 +128,11 @@ namespace AsgardFramework.Memory.Implementation
 
             if (!equals)
                 throw new ArgumentException($"DLL \"{name}\" ({dllName}) not found", nameof(dllName));
+
             Marshal.FreeHGlobal(pModule);
             Kernel.CloseHandle(snapshot);
 
             Name = module.szModule;
-
 
             return (IntPtr)module.hModule;
         }
@@ -199,16 +200,16 @@ namespace AsgardFramework.Memory.Implementation
                     0,
                     0
                 }, WideFieldsWriteType.Pointer, encoding),
-                1 => m_buffer.WriteStruct(new[] {
+                1 => m_buffer.WriteStruct(new object[] {
                     procAddress,
                     isStd,
                     1,
-                    args![0]
+                    args
                 }, WideFieldsWriteType.Pointer, encoding),
                 _ => m_buffer.WriteStruct(new object[] {
                     procAddress,
                     isStd,
-                    args.Length,
+                    args!.Length,
                     args
                 }, WideFieldsWriteType.Pointer, encoding)
             };

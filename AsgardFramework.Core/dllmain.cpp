@@ -4,7 +4,7 @@
 
 static const EndSceneHook hook;
 
-HANDLE InitInteraction(func_call_data** queue)
+HANDLE InitInteraction(frame* queue)
 {
 	EndSceneHook::queue = queue;
 
@@ -29,7 +29,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		Logger::init();
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:

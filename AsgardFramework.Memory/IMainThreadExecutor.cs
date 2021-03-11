@@ -28,8 +28,8 @@ namespace AsgardFramework.Memory
         Thiscall,
 
         /// <summary>
-        ///     Caller cleans up stack, first argument (<see langword="this" />) moved to ecx, second argument is index of virtual
-        ///     function, other arguments pushed to stack
+        ///     Caller cleans up stack, first argument (<see langword="this" />) moved to ecx, other arguments pushed to stack;
+        ///     While registration function address is index of function
         /// </summary>
         Virtualcall
     }
@@ -60,9 +60,16 @@ namespace AsgardFramework.Memory
 
         #region Methods
 
-        RemoteMainThreadFunction RegisterFunction(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount);
+        /// <summary>
+        ///     Registers function for usage by name
+        /// </summary>
+        /// <param name="functionName">Name of function (any)</param>
+        /// <param name="functionType">Call type</param>
+        /// <param name="functionAddress">Address or index (for <see cref="FunctionCallType.Virtualcall" />) of function</param>
+        /// <param name="argumentsCount">Count of arguments, can be 0</param>
+        void RegisterFunction(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount);
 
-        IReadOnlyList<RemoteMainThreadFunction> RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions);
+        void RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions);
 
         #endregion Methods
     }

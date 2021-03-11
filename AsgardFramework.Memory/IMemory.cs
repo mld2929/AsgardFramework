@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -34,11 +35,15 @@ namespace AsgardFramework.Memory
 
         void Write(int offset, byte value);
 
-        void Write(int offset, byte[] data);
+        void Write(int offset, IEnumerable<byte> data);
 
         void Write<T>(int offset, T data) where T : new();
 
-        void Write<T>(int offset, T[] data) where T : new();
+        void Write<T>(int offset, IEnumerable<T> data) where T : new();
+
+        void Write<T>(int offset, ICollection<T> data) where T : new();
+
+        void Write(int offset, IEnumerable<IAutoManagedMemory> pointers);
 
         void Write(int offset, IAutoManagedMemory pointer);
 

@@ -38,8 +38,8 @@ namespace AsgardFramework.Memory.Implementation
         public void RegisterFunction(string name, FunctionCallType type, int address, int argumentsCount) {
             var registrationData = new object[] {
                 name,
-                type,
                 address,
+                type,
                 argumentsCount
             };
 
@@ -51,8 +51,8 @@ namespace AsgardFramework.Memory.Implementation
         public void RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions) {
             var registrationData = functions.Select(descriptor => new object[] {
                                                 descriptor.functionName,
-                                                descriptor.functionType,
                                                 descriptor.functionAddress,
+                                                descriptor.functionType,
                                                 descriptor.argumentsCount
                                             })
                                             .ToArray();

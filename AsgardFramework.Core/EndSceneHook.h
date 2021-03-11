@@ -45,12 +45,16 @@ struct func_init_data
 
 struct func_call_data
 {
+	// c-style utf8 string
 	const char8_t* name;
+	// array of args
 	const int* args;
-	int* result;
+	int result;
 };
 
 #pragma pack(pop)
+
+using frame = func_call_data**;
 
 class EndSceneHook
 {
@@ -60,6 +64,6 @@ public:
 	~EndSceneHook();
 	static HANDLE executionEvent;
 	static void loadFunctions(const std::vector<func_init_data>& data);
-	static func_call_data** queue;
+	static frame* queue;
 	static const func_descriptor& get_descriptor(const char8_t* name);
 };

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -37,6 +38,8 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         private const int c_playerName = 0x00C79D18;
 
+        private static readonly ConcurrentDictionary<int, IGameWrapper> m_cache = new ConcurrentDictionary<int, IGameWrapper>();
+
         private readonly Lazy<FunctionsAccessor> m_functions;
 
         private readonly Lazy<ILuaScriptExecutor> m_luaExecutor;
@@ -53,7 +56,14 @@ namespace AsgardFramework.WoWAPI.Implementation
 
         public static IReadOnlyList<IGameWrapper> Games =>
             Process.GetProcessesByName("Wow")
-                   .Select(game => new GameWrapper(game))
+                   .Select(game => {
+                       if (m_cache.TryGetValue(game.Id, out var wrapper))
+                           return wrapper;
+
+                       wrapper = new GameWrapper(game);
+
+                       return m_cache.TryAdd(game.Id, wrapper) ? wrapper : m_cache[game.Id];
+                   })
                    .ToList();
 
         public string CurrentAccount => m_memory.Value.ReadNullTerminatedString(c_currentAccount, Encoding.UTF8);

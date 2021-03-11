@@ -9,7 +9,7 @@ static unknown** unknown_;
 static end_scene_t endScene;
 
 std::map<std::u8string, func_descriptor, std::less<>> EndSceneHook::functions;
-func_call_data** EndSceneHook::queue;
+frame* EndSceneHook::queue;
 HANDLE EndSceneHook::executionEvent;
 
 static int perform_call(const func_descriptor& desc, const int* args)
@@ -46,19 +46,28 @@ const func_descriptor& EndSceneHook::get_descriptor(const char8_t* name)
 	return functions[name];
 }
 
+std::exception getLastErrorException(const char* msg)
+{
+	return std::exception(msg, GetLastError());
+}
+
 static __declspec(naked) void hook()
 {
 	__asm {
 		pushad
 		pushfd
 		}
-	if (WaitForSingleObject(EndSceneHook::executionEvent, 0) != WAIT_OBJECT_0)
+	int code;
+	if ((code = WaitForSingleObject(EndSceneHook::executionEvent, 0)) == -1)
+		throw getLastErrorException("WaitForSingleObject returned 0xFFFFFFFF");
+	if (code != WAIT_OBJECT_0)
 	{
-		printf("Got signal for execution!\n");
-		for (auto** data = EndSceneHook::queue; *data; data++)
+		for (auto* p_frame_item = EndSceneHook::queue; auto* * p_pdata_array = *p_frame_item; p_frame_item++)
 		{
-			printf("%s\n", (*data)->name);
-			*(*data)->result = perform_call(EndSceneHook::get_descriptor((*data)->name), (*data)->args);
+			for (auto** p_pdata_item = p_pdata_array; auto* p_data_item = *p_pdata_item; p_pdata_item++)
+			{
+				p_data_item->result = perform_call(EndSceneHook::get_descriptor(p_data_item->name), p_data_item->args);
+			}
 		}
 		SetEvent(EndSceneHook::executionEvent);
 	}
@@ -73,13 +82,8 @@ static __declspec(naked) void hook()
 EndSceneHook::EndSceneHook()
 {
 	executionEvent = CreateEventW(nullptr, true, true, nullptr);
-	DWORD old;
 	unknown_ = reinterpret_cast<unknown**>(0xC5DF88);
-	VirtualProtect(unknown_, 4, PAGE_EXECUTE_READWRITE, &old);
-	VirtualProtect(*unknown_, sizeof(unknown), PAGE_EXECUTE_READWRITE, &old);
 	auto** device = (*unknown_)->device;
-	VirtualProtect(device, 4, PAGE_EXECUTE_READWRITE, &old);
-	VirtualProtect(*device, sizeof(IDirect3DDevice9), PAGE_EXECUTE_READWRITE, &old);
 	endScene = reinterpret_cast<device_raw*>(*device)->EndScene;
 	reinterpret_cast<device_raw*>(*device)->EndScene = hook;
 }
