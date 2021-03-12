@@ -9,7 +9,7 @@ static unknown** unknown_;
 static end_scene_t endScene;
 
 std::map<std::u8string, func_descriptor, std::less<>> EndSceneHook::functions;
-frame* EndSceneHook::queue;
+frame** EndSceneHook::queue;
 HANDLE EndSceneHook::executionEvent;
 
 static int perform_call(const func_descriptor& desc, const int* args)
@@ -51,6 +51,19 @@ std::exception getLastErrorException(const char* msg)
 	return std::exception(msg, GetLastError());
 }
 
+static void execute()
+{
+	for (auto** p_pframe = EndSceneHook::queue; auto* pframe = *p_pframe; p_pframe++)
+	{
+		auto count = pframe->count;
+		for (auto i = 0; i < count; i++)
+		{
+			auto* data = pframe->call_data[i];
+			data->result = perform_call(EndSceneHook::get_descriptor(data->name), data->args);
+		}
+	}
+}
+
 static __declspec(naked) void hook()
 {
 	__asm {
@@ -62,14 +75,9 @@ static __declspec(naked) void hook()
 		throw getLastErrorException("WaitForSingleObject returned 0xFFFFFFFF");
 	if (code != WAIT_OBJECT_0)
 	{
-		for (auto* p_frame_item = EndSceneHook::queue; auto* * p_pdata_array = *p_frame_item; p_frame_item++)
-		{
-			for (auto** p_pdata_item = p_pdata_array; auto* p_data_item = *p_pdata_item; p_pdata_item++)
-			{
-				p_data_item->result = perform_call(EndSceneHook::get_descriptor(p_data_item->name), p_data_item->args);
-			}
-		}
+		execute(); 
 		SetEvent(EndSceneHook::executionEvent);
+		
 	}
 	__asm {
 		popfd

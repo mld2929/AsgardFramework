@@ -52,9 +52,14 @@ struct func_call_data
 	int result;
 };
 
+struct frame
+{
+	int count;
+	func_call_data** call_data;
+};
+
 #pragma pack(pop)
 
-using frame = func_call_data**;
 
 class EndSceneHook
 {
@@ -64,6 +69,6 @@ public:
 	~EndSceneHook();
 	static HANDLE executionEvent;
 	static void loadFunctions(const std::vector<func_init_data>& data);
-	static frame* queue;
+	static frame** queue;
 	static const func_descriptor& get_descriptor(const char8_t* name);
 };

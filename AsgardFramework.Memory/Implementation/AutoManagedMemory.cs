@@ -91,6 +91,10 @@ namespace AsgardFramework.Memory.Implementation
             return (Math.Min(start, end), Math.Abs(start - end));
         }
 
+        public override string ToString() {
+            return $"{Start:X}";
+        }
+
         #endregion Methods
     }
 }

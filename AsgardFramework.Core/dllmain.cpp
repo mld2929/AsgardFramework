@@ -4,7 +4,7 @@
 
 static const EndSceneHook hook;
 
-HANDLE InitInteraction(frame* queue)
+HANDLE InitInteraction(frame** queue)
 {
 	EndSceneHook::queue = queue;
 
