@@ -113,14 +113,10 @@ namespace AsgardFramework.Memory.Implementation
 
         private readonly InterprocessManualResetEventSlim m_event;
 
-        private readonly object m_registrationLock = new object();
-
         private readonly IAutoManagedMemory m_processQueue;
 
         private readonly ConcurrentQueue<ExecutionFrame> m_queue = new ConcurrentQueue<ExecutionFrame>();
 
-        private volatile int m_neededExecutionLock;
-        private volatile int m_execution;
         private volatile int m_alreadyExecuting;
 
         #endregion Fields
@@ -140,31 +136,44 @@ namespace AsgardFramework.Memory.Implementation
         #region Methods
 
         public void RegisterFunction(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount) {
-            Interlocked.Increment(ref m_neededExecutionLock);
+            var func_init_data_list = new List<object[]> {
+                new object[] {
+                    functionName,
+                    functionAddress,
+                    functionType,
+                    argumentsCount
+                }
+            };
 
-            while (m_execution != 0) {
-                /* spin wait */
-            }
+            var frame = new ExecutionFrame(("RegisterFunctions", new object[] {
+                                                   func_init_data_list,
+                                                   func_init_data_list.Count
+                                               }), m_buffer);
 
-            lock (m_registrationLock) {
-                m_core.RegisterFunction(functionName, functionType, functionAddress, argumentsCount);
-            }
+            m_queue.Enqueue(frame);
 
-            Interlocked.Decrement(ref m_neededExecutionLock);
+            executeOrWaitAsync(frame)
+                .Wait();
         }
 
         public void RegisterFunctions(IReadOnlyList<(string functionName, FunctionCallType functionType, int functionAddress, int argumentsCount)> functions) {
-            Interlocked.Increment(ref m_neededExecutionLock);
+            var func_init_data_list = functions.Select(f => new object[] {
+                                                   f.functionName,
+                                                   f.functionAddress,
+                                                   f.functionType,
+                                                   f.argumentsCount
+                                               })
+                                               .ToList();
 
-            while (m_execution != 0) {
-                /* spin wait */
-            }
+            var frame = new ExecutionFrame(("RegisterFunctions", new object[] {
+                                                   func_init_data_list,
+                                                   func_init_data_list.Count
+                                               }), m_buffer);
 
-            lock (m_registrationLock) {
-                m_core.RegisterFunctions(functions);
-            }
+            m_queue.Enqueue(frame);
 
-            Interlocked.Decrement(ref m_neededExecutionLock);
+            executeOrWaitAsync(frame)
+                .Wait();
         }
 
         private async Task<int> executeAsync(string functionName, params object[] args) {
@@ -176,24 +185,9 @@ namespace AsgardFramework.Memory.Implementation
         }
 
         private async Task<int[]> executeOrWaitAsync(ExecutionFrame frame) {
-            Interlocked.Increment(ref m_execution);
-
-            while (m_neededExecutionLock != 0) {
-                Interlocked.Decrement(ref m_execution);
-
-                while (m_neededExecutionLock != 0)
-                    await Task.Yield();
-
-                Interlocked.Increment(ref m_execution);
-            }
-
             while (!frame.Executed) {
-                if (Interlocked.Increment(ref m_alreadyExecuting) > 1) {
-                    Interlocked.Decrement(ref m_alreadyExecuting);
-                    await Task.Yield();
-
+                if (Interlocked.CompareExchange(ref m_alreadyExecuting, 1, 0) != 0)
                     continue;
-                }
 
                 var dequeued = await flushQueueAsync()
                                    .ConfigureAwait(false);
@@ -203,10 +197,8 @@ namespace AsgardFramework.Memory.Implementation
                 await m_event.WaitForSignalAsync()
                              .ConfigureAwait(false);
 
-                Interlocked.Decrement(ref m_alreadyExecuting);
-                Interlocked.Decrement(ref m_execution);
-
                 dequeued.ForEach(fr => fr.Executed = true);
+                Interlocked.Decrement(ref m_alreadyExecuting);
             }
 
             return frame.getResults();

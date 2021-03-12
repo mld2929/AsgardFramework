@@ -65,7 +65,7 @@ class EndSceneHook
 {
 	static std::map<std::u8string, func_descriptor, std::less<>> functions;
 public:
-	EndSceneHook();
+	EndSceneHook(func_t registerFunctions);
 	~EndSceneHook();
 	static HANDLE executionEvent;
 	static void loadFunctions(const std::vector<func_init_data>& data);

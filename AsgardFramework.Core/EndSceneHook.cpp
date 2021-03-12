@@ -75,9 +75,8 @@ static __declspec(naked) void hook()
 		throw getLastErrorException("WaitForSingleObject returned 0xFFFFFFFF");
 	if (code != WAIT_OBJECT_0)
 	{
-		execute(); 
+		execute();
 		SetEvent(EndSceneHook::executionEvent);
-		
 	}
 	__asm {
 		popfd
@@ -87,18 +86,20 @@ static __declspec(naked) void hook()
 }
 
 // todo: find EndScene via DirectX
-EndSceneHook::EndSceneHook()
+EndSceneHook::EndSceneHook(func_t registerFunctions)
 {
 	executionEvent = CreateEventW(nullptr, true, true, nullptr);
 	unknown_ = reinterpret_cast<unknown**>(0xC5DF88);
 	auto** device = (*unknown_)->device;
 	endScene = reinterpret_cast<device_raw*>(*device)->EndScene;
 	reinterpret_cast<device_raw*>(*device)->EndScene = hook;
+	functions[u8"RegisterFunctions"] = func_descriptor{registerFunctions, func_type::f_cdecl, 2};
 }
 
 EndSceneHook::~EndSceneHook()
 {
-	reinterpret_cast<device_raw*>(*(*unknown_)->device)->EndScene = endScene;
+	auto** device = (*unknown_)->device;
+	reinterpret_cast<device_raw*>(*device)->EndScene = endScene;
 	CloseHandle(executionEvent);
 }
 
