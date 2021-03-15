@@ -30,7 +30,7 @@ namespace AsgardFramework.Memory.Implementation
 
         internal EndSceneHookExecutor(IAutoScalingSharedBuffer buffer, ICoreDll core) {
             m_buffer = buffer;
-            m_processQueue = m_buffer.Reserve(c_queueSize);
+            m_processQueue = m_buffer.Reserve(c_queueSize + 4);
             m_core = core;
             m_event = m_core.InitializeInteraction(m_processQueue);
         }

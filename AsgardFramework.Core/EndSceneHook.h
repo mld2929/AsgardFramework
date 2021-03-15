@@ -64,6 +64,7 @@ struct frame
 class EndSceneHook
 {
 	static std::map<std::u8string, func_descriptor, std::less<>> functions;
+	static end_scene_t endScene;
 public:
 	EndSceneHook(func_t registerFunctions);
 	~EndSceneHook();

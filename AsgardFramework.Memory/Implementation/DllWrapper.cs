@@ -27,7 +27,7 @@ namespace AsgardFramework.Memory.Implementation
         #endregion Fields
 
         #region Constructors
-
+        // todo: dispose before buffer disposed or use other memory
         public DllWrapper(string name, SafeHandle hProcess, int processId, DllWrapper kernel, IAutoScalingSharedBuffer buffer) : base(IntPtr.Zero, true) {
             m_process = hProcess;
             m_kernel = kernel;

@@ -6,7 +6,7 @@
 #include <iostream>
 
 static unknown** unknown_;
-static end_scene_t endScene;
+end_scene_t EndSceneHook::endScene;
 
 std::map<std::u8string, func_descriptor, std::less<>> EndSceneHook::functions;
 frame** EndSceneHook::queue;

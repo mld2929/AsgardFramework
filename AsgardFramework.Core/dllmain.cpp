@@ -2,7 +2,7 @@
 #include "exports.h"
 #include "Logger.h"
 
-static EndSceneHook* hook;
+static std::unique_ptr<EndSceneHook> hook;
 
 HANDLE InitInteraction(frame** queue)
 {
@@ -29,13 +29,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		hook = new EndSceneHook(reinterpret_cast<func_t>(RegisterFunctions));
+		hook = std::make_unique<EndSceneHook>(reinterpret_cast<func_t>(RegisterFunctions));
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
-		break;
 	case DLL_PROCESS_DETACH:
-		delete hook;
 		break;
 	}
 	return TRUE;
